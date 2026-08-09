@@ -1,103 +1,63 @@
-const Admin = require("../models/Admin");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const Admin = require("../models/Admin");
+const { generateToken } = require("../utils/token");
+const AppError = require("../utils/AppError");
+const asyncHandler = require("../utils/asyncHandler");
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign(
-    { id },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRE,
-    }
-  );
-};
-
-// =======================
-// Register Admin
-// =======================
-const registerAdmin = async (req, res) => {
-  try {
-    const {
-  name,
-  email,
-  password,
-  role,
-} = req.body;
-
-    const adminExists = await Admin.findOne({ email });
-
-    if (adminExists) {
-      return res.status(400).json({
-        success: false,
-        message: "Admin already exists",
-      });
-    }
-
-    const admin = await Admin.create({
-  name,
-  email,
-  password,
-  role,
-});
-
-    const token = generateToken(admin._id);
-
-    res.status(201).json({
-      success: true,
-      message: "Admin registered successfully",
-      token,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// =======================
-// Login Admin
-// =======================
-const loginAdmin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const admin = await Admin.findOne({ email }).select("+password");
-
-    if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    const isMatch = await bcrypt.compare(password, admin.password);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    const token = generateToken(admin._id);
-
-    res.status(200).json({
-  success: true,
-  message: "Login successful",
-  token,
+const toPublicAdmin = (admin) => ({
+  id: admin._id,
+  name: admin.name,
+  email: admin.email,
   role: admin.role,
 });
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+// Register Admin (protected: Admin only)
+const registerAdmin = asyncHandler(async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  const adminExists = await Admin.findOne({ email });
+
+  if (adminExists) {
+    throw new AppError("Admin already exists", 409);
   }
-};
+
+  const admin = await Admin.create({ name, email, password, role });
+
+  const token = generateToken(admin._id);
+
+  res.status(201).json({
+    success: true,
+    message: "Admin registered successfully",
+    token,
+    data: toPublicAdmin(admin),
+  });
+});
+
+// Login Admin
+const loginAdmin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  const admin = await Admin.findOne({ email }).select("+password");
+
+  if (!admin) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const isMatch = await bcrypt.compare(password, admin.password);
+
+  if (!isMatch) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const token = generateToken(admin._id);
+
+  res.status(200).json({
+    success: true,
+    message: "Login successful",
+    token,
+    data: toPublicAdmin(admin),
+  });
+});
 
 module.exports = {
   registerAdmin,

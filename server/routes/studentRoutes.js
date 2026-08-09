@@ -1,9 +1,7 @@
-const {
-  protect,
-  authorize,
-} = require("../middleware/auth");
 const express = require("express");
-
+const { protect, authorize } = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const { ROLES } = require("../config/roles");
 const {
   getStudents,
   getStudentById,
@@ -11,27 +9,27 @@ const {
   updateStudent,
   deleteStudent,
 } = require("../controllers/studentController");
+const {
+  createStudentSchema,
+  updateStudentSchema,
+} = require("../validators/studentValidator");
 
 const router = express.Router();
 
-// GET all students
-router.get("/", getStudents);
+router.use(protect);
 
-// GET student by ID
+// Read: all authenticated roles
+router.get("/", getStudents);
 router.get("/:id", getStudentById);
 
-// POST create student
-router.post(
-  "/",
-  protect,
-  authorize("Admin"),
-  createStudent
+// Write: role-restricted
+router.post("/", authorize(ROLES.ADMIN), validate(createStudentSchema), createStudent);
+router.put(
+  "/:id",
+  authorize(ROLES.ADMIN, ROLES.FACULTY),
+  validate(updateStudentSchema),
+  updateStudent
 );
-
-// PUT update student
-router.put("/:id", updateStudent);
-
-// DELETE student
-router.delete("/:id", deleteStudent);
+router.delete("/:id", authorize(ROLES.ADMIN), deleteStudent);
 
 module.exports = router;

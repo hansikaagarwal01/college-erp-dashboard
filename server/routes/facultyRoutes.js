@@ -1,5 +1,7 @@
 const express = require("express");
-
+const { protect, authorize } = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const { ROLES } = require("../config/roles");
 const {
   getFaculty,
   getFacultyById,
@@ -7,22 +9,22 @@ const {
   updateFaculty,
   deleteFaculty,
 } = require("../controllers/facultyController");
+const {
+  createFacultySchema,
+  updateFacultySchema,
+} = require("../validators/facultyValidator");
 
 const router = express.Router();
 
-// Get All Faculty
-router.get("/", getFaculty);
+router.use(protect);
 
-// Get Faculty By ID
+// Read: all authenticated roles
+router.get("/", getFaculty);
 router.get("/:id", getFacultyById);
 
-// Create Faculty
-router.post("/", createFaculty);
-
-// Update Faculty
-router.put("/:id", updateFaculty);
-
-// Delete Faculty
-router.delete("/:id", deleteFaculty);
+// Write: Admin only
+router.post("/", authorize(ROLES.ADMIN), validate(createFacultySchema), createFaculty);
+router.put("/:id", authorize(ROLES.ADMIN), validate(updateFacultySchema), updateFaculty);
+router.delete("/:id", authorize(ROLES.ADMIN), deleteFaculty);
 
 module.exports = router;

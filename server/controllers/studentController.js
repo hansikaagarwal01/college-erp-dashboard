@@ -1,149 +1,101 @@
 const Student = require("../models/Student");
+const AppError = require("../utils/AppError");
+const asyncHandler = require("../utils/asyncHandler");
+const getPagination = require("../utils/pagination");
+const escapeRegex = require("../utils/escapeRegex");
 
-// Get All Students
-const getStudents = async (req, res) => {
-  try {
-    const { search = "", department, semester } = req.query;
-    const page = Number(req.query.page) || 1;
-const limit = Number(req.query.limit) || 10;
+// Get All Students (search, filter, pagination)
+const getStudents = asyncHandler(async (req, res) => {
+  const { search = "", department, semester, status } = req.query;
+  const { page, limit, skip } = getPagination(req.query);
 
-const skip = (page - 1) * limit;
+  const query = {};
 
-    const query = {
-      $or: [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { rollNumber: { $regex: search, $options: "i" } },
-      ],
-    };
+  if (search) {
+    const regex = new RegExp(escapeRegex(search), "i");
+    query.$or = [
+      { firstName: regex },
+      { lastName: regex },
+      { email: regex },
+      { rollNumber: regex },
+    ];
+  }
 
-    if (department) {
-      query.department = department;
-    }
+  if (department) query.department = department;
+  if (semester) query.semester = Number(semester);
+  if (status) query.status = status;
 
-    if (semester) {
-      query.semester = Number(semester);
-    }
+  const [total, students] = await Promise.all([
+    Student.countDocuments(query),
+    Student.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
+  ]);
 
-    const students = await Student.find(query)
-  .skip(skip)
-  .limit(limit);
-
-    res.status(200).json({
-  success: true,
-  page,
-  limit,
-  count: students.length,
-  data: students,
+  res.status(200).json({
+    success: true,
+    count: students.length,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+    data: students,
+  });
 });
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+// Get Student By ID
+const getStudentById = asyncHandler(async (req, res) => {
+  const student = await Student.findById(req.params.id);
+
+  if (!student) {
+    throw new AppError("Student not found", 404);
   }
-};
-const getStudentById = async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id);
 
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: "Student not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: student,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  res.status(200).json({ success: true, data: student });
+});
 
 // Create Student
-const createStudent = async (req, res) => {
-  try {
-    const student = await Student.create(req.body);
+const createStudent = asyncHandler(async (req, res) => {
+  const student = await Student.create(req.body);
 
-    res.status(201).json({
-      success: true,
-      message: "Student created successfully",
-      data: student,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+  res.status(201).json({
+    success: true,
+    message: "Student created successfully",
+    data: student,
+  });
+});
 
 // Update Student
-const updateStudent = async (req, res) => {
-  try {
-    const student = await Student.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+const updateStudent = asyncHandler(async (req, res) => {
+  const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
+    returnDocument: "after",
+    runValidators: true,
+  });
 
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: "Student not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Student updated successfully",
-      data: student,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!student) {
+    throw new AppError("Student not found", 404);
   }
-};
+
+  res.status(200).json({
+    success: true,
+    message: "Student updated successfully",
+    data: student,
+  });
+});
 
 // Delete Student
-const deleteStudent = async (req, res) => {
-  try {
-    const student = await Student.findByIdAndDelete(req.params.id);
+const deleteStudent = asyncHandler(async (req, res) => {
+  const student = await Student.findByIdAndDelete(req.params.id);
 
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: "Student not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Student deleted successfully",
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!student) {
+    throw new AppError("Student not found", 404);
   }
-};
+
+  res.status(200).json({
+    success: true,
+    message: "Student deleted successfully",
+  });
+});
 
 module.exports = {
   getStudents,
