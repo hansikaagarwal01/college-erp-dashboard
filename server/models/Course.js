@@ -17,8 +17,10 @@ const courseSchema = new mongoose.Schema(
     },
 
     department: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
       required: true,
+      index: true,
     },
 
     credits: {
@@ -29,6 +31,7 @@ const courseSchema = new mongoose.Schema(
     semester: {
       type: Number,
       required: true,
+      index: true,
     },
 
     description: {
@@ -40,6 +43,7 @@ const courseSchema = new mongoose.Schema(
       type: String,
       enum: ["Active", "Inactive"],
       default: "Active",
+      index: true,
     },
   },
   {

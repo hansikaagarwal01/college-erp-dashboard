@@ -1,10 +1,10 @@
-const jwt = require("jsonwebtoken");
-const Admin = require("../models/Admin");
-const config = require("../config");
+const User = require("../models/User");
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
+const { verifyAccessToken } = require("../utils/token");
+const { PERMISSIONS } = require("../config/permissions");
 
-// Protect: verify Bearer token and load the admin onto req.admin
+// Protect: verify Bearer access token and load the user onto req.user
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -19,25 +19,29 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new AppError("Not authorized. No token provided.", 401);
   }
 
-  const decoded = jwt.verify(token, config.jwtSecret);
+  const decoded = verifyAccessToken(token);
 
-  const admin = await Admin.findById(decoded.id).select("-password");
+  const user = await User.findById(decoded.id).select("-password");
 
-  if (!admin) {
+  if (!user) {
     throw new AppError(
       "Not authorized. Account no longer exists.",
       401
     );
   }
 
-  req.admin = admin;
+  if (user.status !== "Active") {
+    throw new AppError("Not authorized. Account is disabled.", 401);
+  }
+
+  req.user = user;
   next();
 });
 
-// Authorize: restrict to a set of roles
+// Authorize: restrict to an explicit set of roles
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.admin || !roles.includes(req.admin.role)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: "Access denied",
@@ -47,7 +51,38 @@ const authorize = (...roles) => {
   };
 };
 
+// Data-driven RBAC: check the permission map for module + action
+const requirePermission = (module, action) => {
+  return (req, res, next) => {
+    const allowedRoles = PERMISSIONS[module]?.[action];
+
+    if (!allowedRoles) {
+      return res.status(500).json({
+        success: false,
+        message: `Permission not defined for ${module}.${action}`,
+      });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized. No token provided.",
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    next();
+  };
+};
+
 module.exports = {
   protect,
   authorize,
+  requirePermission,
 };

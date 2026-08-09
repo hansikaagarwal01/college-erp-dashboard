@@ -17,7 +17,9 @@ const config = {
   port: Number(process.env.PORT) || 5000,
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
-  jwtExpire: process.env.JWT_EXPIRE,
+  jwtExpire: process.env.JWT_EXPIRE || "15m",
+  refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET,
+  refreshTokenExpire: process.env.REFRESH_TOKEN_EXPIRE || "7d",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
   corsOrigins: (process.env.CORS_ORIGIN || "http://localhost:5173")
     .split(",")

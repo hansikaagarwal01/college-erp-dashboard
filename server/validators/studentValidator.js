@@ -6,8 +6,9 @@ const STATUSES = ["Active", "Inactive"];
 const createStudentSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50),
   lastName: z.string().trim().min(1, "Last name is required").max(50),
-  rollNumber: z.string().trim().min(1, "Roll number is required").max(20),
   email: z.string().trim().email("Invalid email address").toLowerCase(),
+  password: z.string().min(8).max(100).optional(),
+  rollNumber: z.string().trim().min(1, "Roll number is required").max(20),
   phone: z.string().trim().min(7, "Phone number is too short").max(20),
   gender: z.enum(GENDERS),
   course: z.string().trim().min(1, "Course is required").max(50),

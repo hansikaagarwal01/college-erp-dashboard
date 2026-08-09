@@ -12,6 +12,8 @@ const departmentRoutes = require("./routes/departmentRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const userRoutes = require("./routes/userRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 
 const app = express();
 
@@ -35,13 +37,15 @@ app.get("/", (req, res) => {
   res.send("College ERP Backend is Running 🚀");
 });
 
-// API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/faculty", facultyRoutes);
-app.use("/api/departments", departmentRoutes);
-app.use("/api/courses", courseRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+// API Routes (versioned)
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/students", studentRoutes);
+app.use("/api/v1/faculty", facultyRoutes);
+app.use("/api/v1/departments", departmentRoutes);
+app.use("/api/v1/courses", courseRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/audit", auditRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);

@@ -6,8 +6,8 @@ const { setupTestEnv, startDb, stopDb, clearDb } = require("./helpers");
 setupTestEnv();
 
 const app = require("../app");
-const Admin = require("../models/Admin");
-const { generateToken } = require("../utils/token");
+const User = require("../models/User");
+const { generateAccessToken } = require("../utils/token");
 
 let mongo;
 
@@ -24,17 +24,17 @@ beforeEach(async () => {
 });
 
 const token = async () => {
-  const admin = await Admin.create({
+  const admin = await User.create({
     name: "Admin",
     email: "admin@test.com",
     password: "password123",
     role: "Admin",
   });
-  return generateToken(admin._id);
+  return generateAccessToken(admin._id);
 };
 
-test("GET /api/unknown — 404 with consistent error shape", async () => {
-  const res = await request(app).get("/api/unknown-route");
+test("GET /api/v1/unknown — 404 with consistent error shape", async () => {
+  const res = await request(app).get("/api/v1/unknown-route");
 
   assert.equal(res.status, 404);
   assert.equal(res.body.success, false);
@@ -42,7 +42,7 @@ test("GET /api/unknown — 404 with consistent error shape", async () => {
 });
 
 test("unexpected route for authenticated resource — 401 keeps error shape", async () => {
-  const res = await request(app).get("/api/students");
+  const res = await request(app).get("/api/v1/students");
 
   assert.equal(res.status, 401);
   assert.equal(res.body.success, false);
@@ -51,7 +51,7 @@ test("unexpected route for authenticated resource — 401 keeps error shape", as
 
 test("protected resource — 401 for tampered token", async () => {
   const res = await request(app)
-    .get("/api/students")
+    .get("/api/v1/students")
     .set("Authorization", "Bearer invalid.token.here");
 
   assert.equal(res.status, 401);
@@ -64,7 +64,7 @@ test("protected resource — 401 for valid-signed but expired token", async () =
   });
 
   const res = await request(app)
-    .get("/api/students")
+    .get("/api/v1/students")
     .set("Authorization", `Bearer ${expired}`);
 
   assert.equal(res.status, 401);
@@ -74,8 +74,24 @@ test("protected resource — 401 when account no longer exists", async () => {
   const stale = jwtSign("665000000000000000000000");
 
   const res = await request(app)
-    .get("/api/students")
+    .get("/api/v1/students")
     .set("Authorization", `Bearer ${stale}`);
+
+  assert.equal(res.status, 401);
+});
+
+test("protected resource — 401 for disabled account", async () => {
+  const disabled = await User.create({
+    name: "Disabled",
+    email: "disabled@test.com",
+    password: "password123",
+    role: "Student",
+    status: "Inactive",
+  });
+
+  const res = await request(app)
+    .get("/api/v1/students")
+    .set("Authorization", `Bearer ${generateAccessToken(disabled._id)}`);
 
   assert.equal(res.status, 401);
 });

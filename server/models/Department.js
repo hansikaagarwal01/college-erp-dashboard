@@ -22,16 +22,6 @@ const departmentSchema = new mongoose.Schema(
       required: true,
     },
 
-    totalFaculty: {
-      type: Number,
-      default: 0,
-    },
-
-    totalStudents: {
-      type: Number,
-      default: 0,
-    },
-
     status: {
       type: String,
       enum: ["Active", "Inactive"],

@@ -1,4 +1,5 @@
 const { z } = require("zod");
+const { ROLE_LIST } = require("../config/roles");
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(50),
@@ -7,7 +8,7 @@ const registerSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters")
     .max(100),
-  role: z.enum(["Admin", "Faculty", "Student"]).optional(),
+  role: z.enum(ROLE_LIST).optional(),
 });
 
 const loginSchema = z.object({
@@ -15,4 +16,8 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required").max(100),
 });
 
-module.exports = { registerSchema, loginSchema };
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token is required"),
+});
+
+module.exports = { registerSchema, loginSchema, refreshSchema };

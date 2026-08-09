@@ -1,9 +1,11 @@
 const express = require("express");
-const { getDashboardStats } = require("../controllers/dashboardController");
 const { protect, requirePermission } = require("../middleware/auth");
+const { getAuditLogs } = require("../controllers/auditController");
 
 const router = express.Router();
 
-router.get("/stats", protect, requirePermission("dashboard", "read"), getDashboardStats);
+router.use(protect);
+
+router.get("/", requirePermission("audit", "read"), getAuditLogs);
 
 module.exports = router;

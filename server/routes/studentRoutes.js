@@ -1,7 +1,7 @@
 const express = require("express");
-const { protect, authorize } = require("../middleware/auth");
+const { protect, requirePermission } = require("../middleware/auth");
 const validate = require("../middleware/validate");
-const { ROLES } = require("../config/roles");
+const audit = require("../middleware/audit");
 const {
   getStudents,
   getStudentById,
@@ -22,14 +22,26 @@ router.use(protect);
 router.get("/", getStudents);
 router.get("/:id", getStudentById);
 
-// Write: role-restricted
-router.post("/", authorize(ROLES.ADMIN), validate(createStudentSchema), createStudent);
+// Write: data-driven permission map
+router.post(
+  "/",
+  requirePermission("students", "write"),
+  validate(createStudentSchema),
+  audit("students", "create", "Student"),
+  createStudent
+);
 router.put(
   "/:id",
-  authorize(ROLES.ADMIN, ROLES.FACULTY),
+  requirePermission("students", "write"),
   validate(updateStudentSchema),
+  audit("students", "update", "Student"),
   updateStudent
 );
-router.delete("/:id", authorize(ROLES.ADMIN), deleteStudent);
+router.delete(
+  "/:id",
+  requirePermission("students", "delete"),
+  audit("students", "delete", "Student"),
+  deleteStudent
+);
 
 module.exports = router;

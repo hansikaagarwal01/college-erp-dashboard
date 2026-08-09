@@ -8,6 +8,7 @@ const createFacultySchema = z.object({
   lastName: z.string().trim().min(1, "Last name is required").max(50),
   employeeId: z.string().trim().min(1, "Employee ID is required").max(20),
   email: z.string().trim().email("Invalid email address").toLowerCase(),
+  password: z.string().min(8).max(100).optional(),
   phone: z.string().trim().min(7, "Phone number is too short").max(20),
   gender: z.enum(GENDERS),
   department: z.string().trim().min(1, "Department is required").max(50),

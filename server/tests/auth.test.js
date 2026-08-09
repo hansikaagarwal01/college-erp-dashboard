@@ -6,8 +6,8 @@ const { setupTestEnv, startDb, stopDb, clearDb } = require("./helpers");
 setupTestEnv();
 
 const app = require("../app");
-const Admin = require("../models/Admin");
-const { generateToken } = require("../utils/token");
+const User = require("../models/User");
+const { generateAccessToken } = require("../utils/token");
 
 let mongo;
 
@@ -23,8 +23,8 @@ beforeEach(async () => {
   await clearDb();
 });
 
-const createAdmin = async (overrides = {}) => {
-  return Admin.create({
+const createUser = async (overrides = {}) => {
+  return User.create({
     name: "Test Admin",
     email: "admin@test.com",
     password: "password123",
@@ -34,22 +34,25 @@ const createAdmin = async (overrides = {}) => {
 };
 
 const login = (email, password) =>
-  request(app).post("/api/auth/login").send({ email, password });
+  request(app).post("/api/v1/auth/login").send({ email, password });
 
-test("POST /api/auth/login — returns token and role for valid credentials", async () => {
-  await createAdmin();
+const bearer = (token) => ({ Authorization: `Bearer ${token}` });
+
+test("POST /api/v1/auth/login — returns access + refresh token for valid credentials", async () => {
+  await createUser();
 
   const res = await login("admin@test.com", "password123");
 
   assert.equal(res.status, 200);
   assert.equal(res.body.success, true);
-  assert.ok(res.body.token);
+  assert.ok(res.body.accessToken);
+  assert.ok(res.body.refreshToken);
   assert.equal(res.body.data.email, "admin@test.com");
   assert.equal(res.body.data.role, "Admin");
 });
 
-test("POST /api/auth/login — 401 for wrong password", async () => {
-  await createAdmin();
+test("POST /api/v1/auth/login — 401 for wrong password", async () => {
+  await createUser();
 
   const res = await login("admin@test.com", "wrongpassword");
 
@@ -57,84 +60,133 @@ test("POST /api/auth/login — 401 for wrong password", async () => {
   assert.equal(res.body.success, false);
 });
 
-test("POST /api/auth/login — 401 for unknown email", async () => {
+test("POST /api/v1/auth/login — 401 for unknown email", async () => {
   const res = await login("nobody@test.com", "password123");
 
   assert.equal(res.status, 401);
 });
 
-test("POST /api/auth/login — 400 for invalid email format", async () => {
+test("POST /api/v1/auth/login — 401 for disabled account", async () => {
+  await createUser({ status: "Inactive" });
+
+  const res = await login("admin@test.com", "password123");
+
+  assert.equal(res.status, 401);
+});
+
+test("POST /api/v1/auth/login — 400 for invalid email format", async () => {
   const res = await login("not-an-email", "password123");
 
   assert.equal(res.status, 400);
   assert.ok(Array.isArray(res.body.errors));
 });
 
-test("POST /api/auth/login — 429 when rate limit exceeded", async () => {
-  // AUTH_RATE_LIMIT_MAX=1000, so hitting the limiter requires many attempts.
-  // Instead verify the limiter responds with the standard shape after bursts
-  // is skipped here; the limiter is unit-tested via its config defaults.
-  // This test just confirms login rejects missing password (validation).
+test("POST /api/v1/auth/login — 400 for missing password", async () => {
   const res = await request(app)
-    .post("/api/auth/login")
+    .post("/api/v1/auth/login")
     .send({ email: "admin@test.com" });
 
   assert.equal(res.status, 400);
 });
 
-test("POST /api/auth/register — 401 without token", async () => {
+test("GET /api/v1/auth/me — 200 returns current user", async () => {
+  const user = await createUser();
+
   const res = await request(app)
-    .post("/api/auth/register")
+    .get("/api/v1/auth/me")
+    .set(bearer(generateAccessToken(user._id)));
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.email, "admin@test.com");
+});
+
+test("POST /api/v1/auth/refresh — rotates the token and returns a new access token", async () => {
+  await createUser();
+  const loginRes = await login("admin@test.com", "password123");
+  const refreshToken = loginRes.body.refreshToken;
+
+  const res = await request(app)
+    .post("/api/v1/auth/refresh")
+    .send({ refreshToken });
+
+  assert.equal(res.status, 200);
+  assert.ok(res.body.accessToken);
+  assert.ok(res.body.refreshToken);
+  assert.notEqual(res.body.refreshToken, refreshToken);
+});
+
+test("POST /api/v1/auth/refresh — rejects a reused refresh token", async () => {
+  await createUser();
+  const loginRes = await login("admin@test.com", "password123");
+  const refreshToken = loginRes.body.refreshToken;
+
+  await request(app).post("/api/v1/auth/refresh").send({ refreshToken });
+
+  const res = await request(app).post("/api/v1/auth/refresh").send({ refreshToken });
+
+  assert.equal(res.status, 401);
+});
+
+test("POST /api/v1/auth/logout — revokes the refresh token", async () => {
+  const user = await createUser();
+
+  const res = await request(app)
+    .post("/api/v1/auth/logout")
+    .set(bearer(generateAccessToken(user._id)));
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+});
+
+test("POST /api/v1/auth/register — 401 without token", async () => {
+  const res = await request(app)
+    .post("/api/v1/auth/register")
     .send({ name: "New", email: "new@test.com", password: "password123" });
 
   assert.equal(res.status, 401);
 });
 
-test("POST /api/auth/register — 403 for non-admin roles", async () => {
-  const student = await createAdmin({ email: "student@test.com", role: "Student" });
-  const token = generateToken(student._id);
+test("POST /api/v1/auth/register — 403 for non-admin roles", async () => {
+  const student = await createUser({ email: "student@test.com", role: "Student" });
 
   const res = await request(app)
-    .post("/api/auth/register")
-    .set("Authorization", `Bearer ${token}`)
+    .post("/api/v1/auth/register")
+    .set(bearer(generateAccessToken(student._id)))
     .send({ name: "New", email: "new@test.com", password: "password123" });
 
   assert.equal(res.status, 403);
 });
 
-test("POST /api/auth/register — 201 for admin creating another admin", async () => {
-  const admin = await createAdmin();
-  const token = generateToken(admin._id);
+test("POST /api/v1/auth/register — 201 for admin creating another admin", async () => {
+  const admin = await createUser();
 
   const res = await request(app)
-    .post("/api/auth/register")
-    .set("Authorization", `Bearer ${token}`)
+    .post("/api/v1/auth/register")
+    .set(bearer(generateAccessToken(admin._id)))
     .send({ name: "New Admin", email: "new@test.com", password: "password123" });
 
   assert.equal(res.status, 201);
   assert.equal(res.body.data.email, "new@test.com");
 });
 
-test("POST /api/auth/register — 409 for duplicate email", async () => {
-  const admin = await createAdmin();
-  const token = generateToken(admin._id);
+test("POST /api/v1/auth/register — 409 for duplicate email", async () => {
+  const admin = await createUser();
 
   const res = await request(app)
-    .post("/api/auth/register")
-    .set("Authorization", `Bearer ${token}`)
+    .post("/api/v1/auth/register")
+    .set(bearer(generateAccessToken(admin._id)))
     .send({ name: "Test Admin", email: "admin@test.com", password: "password123" });
 
   assert.equal(res.status, 409);
-  assert.equal(res.body.message, "Admin already exists");
+  assert.equal(res.body.message, "User already exists");
 });
 
-test("POST /api/auth/register — 400 when password is too short", async () => {
-  const admin = await createAdmin();
-  const token = generateToken(admin._id);
+test("POST /api/v1/auth/register — 400 when password is too short", async () => {
+  const admin = await createUser();
 
   const res = await request(app)
-    .post("/api/auth/register")
-    .set("Authorization", `Bearer ${token}`)
+    .post("/api/v1/auth/register")
+    .set(bearer(generateAccessToken(admin._id)))
     .send({ name: "New", email: "new@test.com", password: "short" });
 
   assert.equal(res.status, 400);

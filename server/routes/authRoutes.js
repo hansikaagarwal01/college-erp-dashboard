@@ -1,26 +1,37 @@
 const express = require("express");
-const { registerAdmin, loginAdmin } = require("../controllers/authController");
-const { protect, authorize } = require("../middleware/auth");
+const {
+  registerUser,
+  login,
+  refresh,
+  logout,
+  me,
+} = require("../controllers/authController");
+const { protect, requirePermission } = require("../middleware/auth");
 const { authLimiter } = require("../middleware/rateLimiter");
 const validate = require("../middleware/validate");
-const { ROLES } = require("../config/roles");
 const {
   registerSchema,
   loginSchema,
+  refreshSchema,
 } = require("../validators/authValidator");
 
 const router = express.Router();
 
 // Public
-router.post("/login", authLimiter, validate(loginSchema), loginAdmin);
+router.post("/login", authLimiter, validate(loginSchema), login);
+router.post("/refresh", authLimiter, validate(refreshSchema), refresh);
+
+// Authenticated
+router.get("/me", protect, me);
+router.post("/logout", protect, logout);
 
 // Admin only (seed the first admin via: npm run seed:admin)
 router.post(
   "/register",
   protect,
-  authorize(ROLES.ADMIN),
+  requirePermission("users", "write"),
   validate(registerSchema),
-  registerAdmin
+  registerUser
 );
 
 module.exports = router;
