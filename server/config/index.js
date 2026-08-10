@@ -21,9 +21,18 @@ const config = {
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET,
   refreshTokenExpire: process.env.REFRESH_TOKEN_EXPIRE || "7d",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  serverUrl: process.env.SERVER_URL || "http://localhost:5000",
   corsOrigins: (process.env.CORS_ORIGIN || "http://localhost:5173")
     .split(",")
     .map((origin) => origin.trim()),
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    redirectUri:
+      process.env.GOOGLE_REDIRECT_URI ||
+      `${process.env.SERVER_URL || "http://localhost:5000"}/api/v1/auth/google/callback`,
+    enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  },
   rateLimit: {
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     max: Number(process.env.RATE_LIMIT_MAX) || 100,

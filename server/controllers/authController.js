@@ -171,4 +171,7 @@ module.exports = {
   refresh,
   logout,
   me,
+  toPublicUser,
+  issueTokens,
+  saveRefreshToken,
 };

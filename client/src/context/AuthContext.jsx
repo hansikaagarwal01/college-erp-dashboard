@@ -17,14 +17,18 @@ export function AuthProvider({ children }) {
     }
   })
 
+  const setSession = useCallback((accessToken, user) => {
+    localStorage.setItem(TOKEN_KEY, accessToken)
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
+    setToken(accessToken)
+    setUser(user)
+  }, [])
+
   const login = useCallback(async (email, password) => {
     const { data } = await loginApi({ email, password })
-    localStorage.setItem(TOKEN_KEY, data.token)
-    localStorage.setItem(USER_KEY, JSON.stringify(data.data))
-    setToken(data.token)
-    setUser(data.data)
+    setSession(data.accessToken, data.data)
     return data
-  }, [])
+  }, [setSession])
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
@@ -34,8 +38,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ token, user, isAuthenticated: Boolean(token), login, logout }),
-    [token, user, login, logout]
+    () => ({ token, user, isAuthenticated: Boolean(token), login, logout, setSession }),
+    [token, user, login, logout, setSession]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

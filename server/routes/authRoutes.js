@@ -14,12 +14,15 @@ const {
   loginSchema,
   refreshSchema,
 } = require("../validators/authValidator");
+const { googleAuth, googleCallback } = require("../controllers/ssoController");
 
 const router = express.Router();
 
 // Public
 router.post("/login", authLimiter, validate(loginSchema), login);
 router.post("/refresh", authLimiter, validate(refreshSchema), refresh);
+router.get("/google", googleAuth);
+router.get("/google/callback", googleCallback);
 
 // Authenticated
 router.get("/me", protect, me);
