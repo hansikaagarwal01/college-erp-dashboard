@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { to: '/results', label: 'Results', icon: '📝', ready: true },
   { to: '/timetable', label: 'Timetable', icon: '🕐', ready: true },
   { to: '/files', label: 'Files', icon: '📁', ready: true },
-  { to: '/fees', label: 'Fees', icon: '💳', ready: false },
+  { to: '/fees', label: 'Fees', icon: '💳', ready: true },
   { to: '/announcements', label: 'Announcements', icon: '📢', ready: false },
 ]
 

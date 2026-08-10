@@ -43,4 +43,11 @@ export const getFiles = (params) => api.get('/files', { params })
 export const getFileDownloadUrl = (id) => `/api/v1/files/${id}`
 export const deleteFile = (id) => api.delete(`/files/${id}`)
 
+// Fees
+export const getFees = (params) => api.get('/fees', { params })
+export const getFeeSummary = () => api.get('/fees/summary')
+export const createFee = (payload) => api.post('/fees', payload)
+export const recordFeePayment = (id, payload) => api.post(`/fees/${id}/pay`, payload)
+export const deleteFee = (id) => api.delete(`/fees/${id}`)
+
 export default api

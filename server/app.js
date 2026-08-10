@@ -19,6 +19,7 @@ const examRoutes = require("./routes/examRoutes");
 const resultRoutes = require("./routes/resultRoutes");
 const timetableRoutes = require("./routes/timetableRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const feeRoutes = require("./routes/feeRoutes");
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/v1/exams", examRoutes);
 app.use("/api/v1/results", resultRoutes);
 app.use("/api/v1/timetable", timetableRoutes);
 app.use("/api/v1/files", fileRoutes);
+app.use("/api/v1/fees", feeRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);

@@ -10,6 +10,7 @@ import Exams from './pages/Exams/Exams'
 import Results from './pages/Results/Results'
 import Timetable from './pages/Timetable/Timetable'
 import Files from './pages/Files/Files'
+import Fees from './pages/Fees/Fees'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="results" element={<Results />} />
           <Route path="timetable" element={<Timetable />} />
           <Route path="files" element={<Files />} />
+          <Route path="fees" element={<Fees />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
