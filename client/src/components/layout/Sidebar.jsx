@@ -6,10 +6,12 @@ const NAV_ITEMS = [
   { to: '/faculty', label: 'Faculty', icon: '👩‍🏫', ready: false },
   { to: '/departments', label: 'Departments', icon: '🏛️', ready: false },
   { to: '/courses', label: 'Courses', icon: '📚', ready: false },
-  { to: '/attendance', label: 'Attendance', icon: '✅', ready: false },
+  { to: '/attendance', label: 'Attendance', icon: '✅', ready: true },
+  { to: '/exams', label: 'Exams', icon: '🧪', ready: true },
+  { to: '/results', label: 'Results', icon: '📝', ready: true },
+  { to: '/timetable', label: 'Timetable', icon: '🕐', ready: true },
+  { to: '/files', label: 'Files', icon: '📁', ready: true },
   { to: '/fees', label: 'Fees', icon: '💳', ready: false },
-  { to: '/results', label: 'Results', icon: '📝', ready: false },
-  { to: '/timetable', label: 'Timetable', icon: '🕐', ready: false },
   { to: '/announcements', label: 'Announcements', icon: '📢', ready: false },
 ]
 
