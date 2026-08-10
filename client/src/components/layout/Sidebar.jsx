@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/files', label: 'Files', icon: '📁', ready: true },
   { to: '/fees', label: 'Fees', icon: '💳', ready: true },
   { to: '/notifications', label: 'Notifications', icon: '🔔', ready: true },
+  { to: '/analytics', label: 'Analytics', icon: '📈', ready: true },
   { to: '/announcements', label: 'Announcements', icon: '📢', ready: false },
 ]
 

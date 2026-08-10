@@ -8,6 +8,10 @@ export const getDashboardStats = async () => {
   const { data } = await api.get('/dashboard/stats')
   return data
 }
+export const getDashboardAnalytics = async () => {
+  const { data } = await api.get('/dashboard/analytics')
+  return data
+}
 
 // Attendance
 export const getAttendance = (params) => api.get('/attendance', { params })
