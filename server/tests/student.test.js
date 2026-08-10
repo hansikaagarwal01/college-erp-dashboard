@@ -41,12 +41,11 @@ beforeEach(async () => {
 });
 
 const tokenFor = async ({ role, email }) => {
-  const user = await User.create({
-    name: role,
-    email,
-    password: "password123",
-    role,
-  });
+  // Reuse the same account across calls within a test (unique email index)
+  let user = await User.findOne({ email });
+  if (!user) {
+    user = await User.create({ name: role, email, password: "password123", role });
+  }
   return generateAccessToken(user._id);
 };
 
@@ -92,7 +91,7 @@ test("POST /api/v1/students — 201 create as Admin with resolved refs", async (
 
   assert.equal(res.status, 201);
   assert.equal(res.body.data.rollNumber, validStudent.rollNumber);
-  assert.equal(res.body.data.email, validStudent.email);
+  assert.equal(res.body.data.user.email, validStudent.email);
   assert.equal(res.body.data.department.code, "CSE");
   assert.equal(res.body.data.course.code, "BTCSE");
 });
@@ -147,7 +146,7 @@ test("GET /api/v1/students — search filters by user email", async () => {
 
   assert.equal(res.status, 200);
   assert.equal(res.body.pagination.total, 1);
-  assert.equal(res.body.data[0].email, "jane@test.com");
+  assert.equal(res.body.data[0].user.email, "jane@test.com");
 });
 
 test("GET /api/v1/students/:id — 200 for existing student", async () => {

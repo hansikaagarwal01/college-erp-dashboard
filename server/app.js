@@ -14,6 +14,11 @@ const authRoutes = require("./routes/authRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const userRoutes = require("./routes/userRoutes");
 const auditRoutes = require("./routes/auditRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const examRoutes = require("./routes/examRoutes");
+const resultRoutes = require("./routes/resultRoutes");
+const timetableRoutes = require("./routes/timetableRoutes");
+const fileRoutes = require("./routes/fileRoutes");
 
 const app = express();
 
@@ -46,6 +51,11 @@ app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/audit", auditRoutes);
+app.use("/api/v1/attendance", attendanceRoutes);
+app.use("/api/v1/exams", examRoutes);
+app.use("/api/v1/results", resultRoutes);
+app.use("/api/v1/timetable", timetableRoutes);
+app.use("/api/v1/files", fileRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);

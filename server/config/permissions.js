@@ -48,6 +48,41 @@ const PERMISSIONS = {
   audit: {
     read: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   },
+  attendance: {
+    read: ALL_ROLES,
+    write: [
+      ROLES.SUPER_ADMIN,
+      ROLES.ADMIN,
+      ROLES.REGISTRAR,
+      ROLES.FACULTY,
+    ],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  exams: {
+    read: ALL_ROLES,
+    write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.FACULTY],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  results: {
+    read: ALL_ROLES,
+    write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.FACULTY],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  timetable: {
+    read: ALL_ROLES,
+    write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.REGISTRAR],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  files: {
+    read: ALL_ROLES,
+    write: [
+      ROLES.SUPER_ADMIN,
+      ROLES.ADMIN,
+      ROLES.REGISTRAR,
+      ROLES.FACULTY,
+    ],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
 };
 
 module.exports = { PERMISSIONS, ALL_ROLES };
