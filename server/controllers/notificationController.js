@@ -4,6 +4,17 @@ const User = require("../models/User");
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
 const getPagination = require("../utils/pagination");
+const { getIO } = require("../io");
+
+const emitNotification = (notification) => {
+  const io = getIO();
+  if (io) {
+    io.to(`user:${String(notification.recipient)}`).emit(
+      "notification:new",
+      serializeNotification(notification)
+    );
+  }
+};
 
 const resolveRecipient = async (value) => {
   if (mongoose.isValidObjectId(value)) return value;
@@ -61,6 +72,8 @@ const createNotification = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
+  emitNotification(notification);
+
   res.status(201).json({
     success: true,
     message: "Notification created",
@@ -84,6 +97,8 @@ const bulkNotify = asyncHandler(async (req, res) => {
   }));
 
   const inserted = await Notification.insertMany(docs);
+
+  for (const n of inserted) emitNotification(n);
 
   res.status(201).json({
     success: true,

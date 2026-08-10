@@ -21,6 +21,8 @@ const timetableRoutes = require("./routes/timetableRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const feeRoutes = require("./routes/feeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const exportRoutes = require("./routes/exportRoutes");
+const admissionRoutes = require("./routes/admissionRoutes");
 
 const app = express();
 
@@ -60,6 +62,8 @@ app.use("/api/v1/timetable", timetableRoutes);
 app.use("/api/v1/files", fileRoutes);
 app.use("/api/v1/fees", feeRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/export", exportRoutes);
+app.use("/api/v1/admissions", admissionRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);

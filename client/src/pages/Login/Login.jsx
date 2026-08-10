@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 
@@ -91,6 +91,12 @@ function Login() {
             {submitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+
+        <p className="text-center text-sm mt-4">
+          <Link to="/forgot-password" className="text-blue-600 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
 
         <div className="flex items-center gap-3 my-5">
           <div className="flex-1 h-px bg-gray-200" />

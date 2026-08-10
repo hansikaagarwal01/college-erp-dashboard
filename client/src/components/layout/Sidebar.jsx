@@ -2,7 +2,8 @@ import { NavLink } from 'react-router-dom'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊', ready: true },
-  { to: '/students', label: 'Students', icon: '🎓', ready: false },
+  { to: '/admissions', label: 'Admissions', icon: '🎓', ready: true },
+  { to: '/students', label: 'Students', icon: '🎒', ready: false },
   { to: '/faculty', label: 'Faculty', icon: '👩‍🏫', ready: false },
   { to: '/departments', label: 'Departments', icon: '🏛️', ready: false },
   { to: '/courses', label: 'Courses', icon: '📚', ready: false },

@@ -30,10 +30,27 @@ const verifyRefreshToken = (token) => {
   return decoded;
 };
 
+const generateResetToken = (userId) =>
+  jwt.sign({ id: userId, type: "reset" }, config.jwtSecret, {
+    expiresIn: "30m",
+  });
+
+const verifyResetToken = (token) => {
+  const decoded = jwt.verify(token, config.jwtSecret);
+  if (decoded.type !== "reset") {
+    const err = new Error("Invalid token type");
+    err.name = "JsonWebTokenError";
+    throw err;
+  }
+  return decoded;
+};
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
   hashToken,
   verifyAccessToken,
   verifyRefreshToken,
+  generateResetToken,
+  verifyResetToken,
 };

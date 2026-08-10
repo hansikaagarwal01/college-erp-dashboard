@@ -1,10 +1,13 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const config = require("../config");
 const {
   generateAccessToken,
   generateRefreshToken,
   hashToken,
   verifyRefreshToken,
+  generateResetToken,
+  verifyResetToken,
 } = require("../utils/token");
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
@@ -164,6 +167,64 @@ const me = asyncHandler(async (req, res) => {
 // Roles an admin may create through the register endpoint
 const canAssignRole = (role) => STAFF_ROLES.includes(role);
 
+// Request a password reset token. Email delivery is not configured yet,
+// so the token/link is returned in the response (dev mode).
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    // Never reveal whether an account exists
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists for that email, a reset link has been generated.",
+    });
+  }
+
+  const token = generateResetToken(user._id);
+  const resetLink = `${config.clientUrl}/reset-password?token=${token}`;
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset token generated",
+    resetToken: token,
+    resetLink,
+  });
+});
+
+// Reset the password using a valid reset token, then revoke all sessions
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+
+  let decoded;
+  try {
+    decoded = verifyResetToken(token);
+  } catch {
+    throw new AppError("Invalid or expired reset token", 400);
+  }
+
+  const user = await User.findById(decoded.id).select("+password");
+
+  if (!user || user.status !== "Active") {
+    throw new AppError("Invalid or expired reset token", 400);
+  }
+
+  user.password = password;
+  await user.save();
+
+  // Invalidate any active refresh tokens
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { refreshToken: null, refreshTokenExpiresAt: null } }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successfully. You can now log in.",
+  });
+});
+
 module.exports = {
   registerUser,
   canAssignRole,
@@ -171,6 +232,8 @@ module.exports = {
   refresh,
   logout,
   me,
+  forgotPassword,
+  resetPassword,
   toPublicUser,
   issueTokens,
   saveRefreshToken,

@@ -4,7 +4,10 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login/Login'
+import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
+import ResetPassword from './pages/ResetPassword/ResetPassword'
 import Dashboard from './pages/Dashboard/Dashboard'
+import Admissions from './pages/Admissions/Admissions'
 import Attendance from './pages/Attendance/Attendance'
 import Exams from './pages/Exams/Exams'
 import Results from './pages/Results/Results'
@@ -19,6 +22,8 @@ function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/"
@@ -30,6 +35,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="admissions" element={<Admissions />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="exams" element={<Exams />} />
           <Route path="results" element={<Results />} />

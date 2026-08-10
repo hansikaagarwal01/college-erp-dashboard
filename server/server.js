@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const app = require("./app");
 const connectDB = require("./config/database");
 const config = require("./config");
+const createSocketServer = require("./socket");
+const { setIO } = require("./io");
 
 // Connect Database
 connectDB();
@@ -9,6 +11,9 @@ connectDB();
 const server = app.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
 });
+
+// Real-time notifications over Socket.IO
+setIO(createSocketServer(server));
 
 // Graceful shutdown
 const gracefulShutdown = (signal) => {

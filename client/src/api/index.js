@@ -2,6 +2,8 @@ import api from './client'
 
 // Auth
 export const loginApi = (credentials) => api.post('/auth/login', credentials)
+export const forgotPassword = (payload) => api.post('/auth/forgot-password', payload)
+export const resetPassword = (payload) => api.post('/auth/reset-password', payload)
 
 // Dashboard
 export const getDashboardStats = async () => {
@@ -61,5 +63,39 @@ export const createNotification = (payload) => api.post('/notifications', payloa
 export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`)
 export const markAllNotificationsRead = () => api.patch('/notifications/read-all')
 export const deleteNotification = (id) => api.delete(`/notifications/${id}`)
+
+// Admissions
+export const getAdmissions = (params) => api.get('/admissions', { params })
+export const getMyAdmissions = () => api.get('/admissions/mine')
+export const createAdmission = (payload) => api.post('/admissions', payload)
+export const approveAdmission = (id) => api.post(`/admissions/${id}/approve`)
+export const rejectAdmission = (id, payload) => api.post(`/admissions/${id}/reject`, payload)
+export const deleteAdmission = (id) => api.delete(`/admissions/${id}`)
+
+// Exports
+const downloadBlob = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  window.URL.revokeObjectURL(url)
+}
+export const exportStudents = async () => {
+  const res = await api.get('/export/students', { responseType: 'blob' })
+  downloadBlob(res.data, 'students.csv')
+}
+export const exportFaculty = async () => {
+  const res = await api.get('/export/faculty', { responseType: 'blob' })
+  downloadBlob(res.data, 'faculty.csv')
+}
+export const exportFees = async () => {
+  const res = await api.get('/export/fees', { responseType: 'blob' })
+  downloadBlob(res.data, 'fees.csv')
+}
+export const exportResults = async () => {
+  const res = await api.get('/export/results', { responseType: 'blob' })
+  downloadBlob(res.data, 'results.csv')
+}
 
 export default api

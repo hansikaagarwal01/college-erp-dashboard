@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getResults, createResult, deleteResult } from '../../api'
+import { getResults, createResult, deleteResult, exportResults } from '../../api'
 
 function Results() {
   const queryClient = useQueryClient()
@@ -43,11 +43,28 @@ function Results() {
     createMutation.mutate({ ...form, score: Number(form.score), semester: Number(form.semester) })
   }
 
+  const handleExport = async () => {
+    try {
+      await exportResults()
+      toast.success('Results exported')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Export failed')
+    }
+  }
+
   const results = data?.data || []
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Results</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Results</h1>
+        <button
+          onClick={handleExport}
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-4 py-2 text-sm"
+        >
+          Export CSV
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-5 rounded-lg shadow-sm grid grid-cols-2 md:grid-cols-4 gap-3">
         <input

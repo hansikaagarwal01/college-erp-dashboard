@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getFees, getFeeSummary, createFee, recordFeePayment, deleteFee } from '../../api'
+import { getFees, getFeeSummary, createFee, recordFeePayment, deleteFee, exportFees } from '../../api'
 
 const METHODS = ['Cash', 'Card', 'Bank Transfer', 'UPI', 'Cheque']
 
@@ -76,12 +76,29 @@ function Fees() {
     payMutation.mutate({ id: paying, payload: { amount: Number(payment.amount), method: payment.method, reference: payment.reference } })
   }
 
+  const handleExport = async () => {
+    try {
+      await exportFees()
+      toast.success('Fees exported')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Export failed')
+    }
+  }
+
   const fees = data?.data || []
   const s = summary?.data || {}
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Fees</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Fees</h1>
+        <button
+          onClick={handleExport}
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-4 py-2 text-sm"
+        >
+          Export CSV
+        </button>
+      </div>
 
       {!isLoading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
