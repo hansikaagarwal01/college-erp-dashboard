@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUserGraduate,
@@ -14,8 +15,9 @@ import courses from "../../data/courseData";
 
 import DashboardCard from "../../components/dashboard/DashboardCard";
 import StudentAnalytics from "../../components/dashboard/StudentAnalytics";
-import AdmissionChart from "../../components/dashboard/charts/AdmissionChart";
 import DepartmentChart from "../../components/dashboard/charts/DepartmentChart";
+import FacultyDepartmentChart from "../../components/dashboard/charts/FacultyDepartmentChart";
+import CourseDistributionChart from "../../components/dashboard/charts/CourseDistributionChart";
 import RecentActivity from "../../components/dashboard/RecentActivity";
 import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
 import NoticeBoard from "../../components/dashboard/NoticeBoard";
@@ -26,6 +28,16 @@ const today = new Date().toLocaleDateString("en-US", {
   month: "long",
   day: "numeric",
 });
+
+function groupByDepartment(list, valueKey) {
+  const map = {};
+  list.forEach((item) => {
+    const name = item.department || "Unassigned";
+    if (!map[name]) map[name] = { name, [valueKey]: 0 };
+    map[name][valueKey] += 1;
+  });
+  return Object.values(map).sort((a, b) => b[valueKey] - a[valueKey]);
+}
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -88,10 +100,28 @@ function Dashboard() {
     },
   ];
 
-  const departmentChartData = departments.map((d) => ({
-    name: d.name,
-    value: d.students,
-  }));
+  const studentsByDepartment = useMemo(
+    () => groupByDepartment(students, "value"),
+    []
+  );
+
+  const facultyByDepartment = useMemo(
+    () => groupByDepartment(faculty, "value"),
+    []
+  );
+
+  const coursesByDepartment = useMemo(() => {
+    const map = {};
+    courses.forEach((course) => {
+      const name = course.department || "Unassigned";
+      if (!map[name])
+        map[name] = { name, courses: 0, active: 0, inactive: 0 };
+      map[name].courses += 1;
+      if (course.status === "Active") map[name].active += 1;
+      else map[name].inactive += 1;
+    });
+    return Object.values(map).sort((a, b) => b.courses - a.courses);
+  }, []);
 
   return (
     <div className="page">
@@ -117,15 +147,16 @@ function Dashboard() {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <AdmissionChart />
-        <DepartmentChart data={departmentChartData} />
-      </div>
-
-      {/* Student analytics */}
+      {/* Student distribution drill-down */}
       <div className="mt-6">
         <StudentAnalytics />
+      </div>
+
+      {/* Additional analytics */}
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <DepartmentChart data={studentsByDepartment} title="Students by Department" />
+        <FacultyDepartmentChart data={facultyByDepartment} />
+        <CourseDistributionChart data={coursesByDepartment} />
       </div>
 
       {/* Activity widgets */}
