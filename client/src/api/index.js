@@ -50,4 +50,12 @@ export const createFee = (payload) => api.post('/fees', payload)
 export const recordFeePayment = (id, payload) => api.post(`/fees/${id}/pay`, payload)
 export const deleteFee = (id) => api.delete(`/fees/${id}`)
 
+// Notifications
+export const getNotifications = (params) => api.get('/notifications', { params })
+export const getUnreadCount = () => api.get('/notifications/unread-count')
+export const createNotification = (payload) => api.post('/notifications', payload)
+export const markNotificationRead = (id) => api.patch(`/notifications/${id}/read`)
+export const markAllNotificationsRead = () => api.patch('/notifications/read-all')
+export const deleteNotification = (id) => api.delete(`/notifications/${id}`)
+
 export default api

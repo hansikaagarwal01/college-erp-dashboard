@@ -11,6 +11,7 @@ import Results from './pages/Results/Results'
 import Timetable from './pages/Timetable/Timetable'
 import Files from './pages/Files/Files'
 import Fees from './pages/Fees/Fees'
+import Notifications from './pages/Notifications/Notifications'
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="timetable" element={<Timetable />} />
           <Route path="files" element={<Files />} />
           <Route path="fees" element={<Fees />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

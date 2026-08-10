@@ -20,6 +20,7 @@ const resultRoutes = require("./routes/resultRoutes");
 const timetableRoutes = require("./routes/timetableRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const feeRoutes = require("./routes/feeRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/v1/results", resultRoutes);
 app.use("/api/v1/timetable", timetableRoutes);
 app.use("/api/v1/files", fileRoutes);
 app.use("/api/v1/fees", feeRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);
