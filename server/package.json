@@ -9,6 +9,7 @@
     "seed:admin": "node scripts/seedAdmin.js",
     "migrate": "node scripts/migrate.js",
     "migrate:apply": "node scripts/migrate.js --apply",
+    "indexes": "node scripts/ensureIndexes.js",
     "test": "node --test --test-concurrency=2 \"tests/*.test.js\""
   },
   "keywords": [],

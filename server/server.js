@@ -8,6 +8,19 @@ const { setIO } = require("./io");
 // Connect Database
 connectDB();
 
+// Ensure schema indexes on startup (MongoDB Atlas / production)
+mongoose.connection.once("open", async () => {
+  if (config.isProduction) {
+    try {
+      const ensureIndexes = require("./utils/ensureIndexes");
+      await ensureIndexes();
+      console.log("MongoDB indexes ensured.");
+    } catch (error) {
+      console.error("Failed to ensure indexes:", error.message);
+    }
+  }
+});
+
 const server = app.listen(config.port, () => {
   console.log(`🚀 Server running on port ${config.port}`);
 });
@@ -24,6 +37,12 @@ const gracefulShutdown = (signal) => {
       console.log("MongoDB connection closed.");
     } catch (error) {
       console.error("Error during shutdown:", error.message);
+    }
+    try {
+      const { closeRedis } = require("./config/redis");
+      await closeRedis();
+    } catch (error) {
+      // no-op if redis is not configured
     }
     process.exit(0);
   });
