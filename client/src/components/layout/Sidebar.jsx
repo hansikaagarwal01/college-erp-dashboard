@@ -11,10 +11,13 @@ const NAV_ITEMS = [
   { to: '/exams', label: 'Exams', icon: '🧪', ready: true },
   { to: '/results', label: 'Results', icon: '📝', ready: true },
   { to: '/timetable', label: 'Timetable', icon: '🕐', ready: true },
+  { to: '/curriculum', label: 'Curriculum', icon: '📖', ready: true },
+  { to: '/workload', label: 'Workload', icon: '⚖️', ready: true },
   { to: '/files', label: 'Files', icon: '📁', ready: true },
   { to: '/fees', label: 'Fees', icon: '💳', ready: true },
   { to: '/notifications', label: 'Notifications', icon: '🔔', ready: true },
   { to: '/analytics', label: 'Analytics', icon: '📈', ready: true },
+  { to: '/jobs', label: 'Jobs', icon: '🛠️', ready: true },
   { to: '/announcements', label: 'Announcements', icon: '📢', ready: false },
 ]
 

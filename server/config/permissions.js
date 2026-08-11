@@ -109,6 +109,16 @@ const PERMISSIONS = {
     write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.REGISTRAR],
     delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
   },
+  syllabus: {
+    read: ALL_ROLES,
+    write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.FACULTY],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
+  workload: {
+    read: ALL_ROLES,
+    write: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.REGISTRAR],
+    delete: [ROLES.SUPER_ADMIN, ROLES.ADMIN],
+  },
 };
 
 module.exports = { PERMISSIONS, ALL_ROLES };

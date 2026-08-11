@@ -53,6 +53,15 @@ const config = {
     // Block login until the email address is verified
     requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === "true",
   },
+  workload: {
+    // Max teaching hours a faculty member can carry per week across a term
+    maxWeeklyHours: Number(process.env.WORKLOAD_MAX_WEEKLY_HOURS) || 20,
+  },
+  redisUrl: process.env.REDIS_URL || "",
+  tenant: {
+    // Set to a Tenant _id to force single-tenant isolation on core reference data
+    defaultTenantId: process.env.DEFAULT_TENANT_ID || "",
+  },
   isProduction: process.env.NODE_ENV === "production",
   isTest: process.env.NODE_ENV === "test",
 };

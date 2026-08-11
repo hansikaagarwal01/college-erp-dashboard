@@ -5,6 +5,8 @@ const helmet = require("helmet");
 const config = require("./config");
 const { generalLimiter } = require("./middleware/rateLimiter");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
+const swaggerUi = require("swagger-ui-express");
+const apiSpec = require("./docs/swagger");
 
 const studentRoutes = require("./routes/studentRoutes");
 const facultyRoutes = require("./routes/facultyRoutes");
@@ -23,6 +25,10 @@ const feeRoutes = require("./routes/feeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const exportRoutes = require("./routes/exportRoutes");
 const admissionRoutes = require("./routes/admissionRoutes");
+const syllabusRoutes = require("./routes/syllabusRoutes");
+const workloadRoutes = require("./routes/workloadRoutes");
+const jobRoutes = require("./routes/jobRoutes");
+const tenantMiddleware = require("./middleware/tenant");
 
 const app = express();
 
@@ -40,6 +46,12 @@ app.use(express.json({ limit: "10kb" }));
 
 // Rate limiting for all API routes
 app.use("/api", generalLimiter);
+
+// Optional multi-tenancy (X-Tenant-ID header or DEFAULT_TENANT_ID)
+app.use("/api", tenantMiddleware);
+
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(apiSpec));
 
 // Home Route
 app.get("/", (req, res) => {
@@ -64,6 +76,9 @@ app.use("/api/v1/fees", feeRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/export", exportRoutes);
 app.use("/api/v1/admissions", admissionRoutes);
+app.use("/api/v1/curriculum", syllabusRoutes);
+app.use("/api/v1/workload", workloadRoutes);
+app.use("/api/v1/jobs", jobRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);

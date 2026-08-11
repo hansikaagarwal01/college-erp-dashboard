@@ -75,6 +75,27 @@ export const approveAdmission = (id) => api.post(`/admissions/${id}/approve`)
 export const rejectAdmission = (id, payload) => api.post(`/admissions/${id}/reject`, payload)
 export const deleteAdmission = (id) => api.delete(`/admissions/${id}`)
 
+// Curriculum / Syllabus
+export const getSyllabi = (params) => api.get('/curriculum', { params })
+export const getSyllabusByCourse = (courseId) => api.get(`/curriculum/course/${courseId}`)
+export const createSyllabus = (payload) => api.post('/curriculum', payload)
+export const updateSyllabus = (id, payload) => api.put(`/curriculum/${id}`, payload)
+export const deleteSyllabus = (id) => api.delete(`/curriculum/${id}`)
+
+// Faculty workload
+export const getWorkloads = (params) => api.get('/workload', { params })
+export const getWorkloadSummary = (params) => api.get('/workload/summary', { params })
+export const getFacultyWorkload = (facultyId) => api.get(`/workload/faculty/${facultyId}`)
+export const createWorkload = (payload) => api.post('/workload', payload)
+export const updateWorkload = (id, payload) => api.put(`/workload/${id}`, payload)
+export const deleteWorkload = (id) => api.delete(`/workload/${id}`)
+
+// Background jobs
+export const getJobsHealth = () => api.get('/jobs/health')
+export const runFeeReminders = (payload) => api.post('/jobs/fee-reminders', payload)
+export const runReportJob = (type) => api.post(`/jobs/reports/${type}`)
+export const sendEmailJob = (payload) => api.post('/jobs/email', payload)
+
 // Exports
 const downloadBlob = (blob, filename) => {
   const url = window.URL.createObjectURL(blob)

@@ -14,10 +14,13 @@ import Attendance from './pages/Attendance/Attendance'
 import Exams from './pages/Exams/Exams'
 import Results from './pages/Results/Results'
 import Timetable from './pages/Timetable/Timetable'
+import Curriculum from './pages/Curriculum/Curriculum'
+import Workload from './pages/Workload/Workload'
 import Files from './pages/Files/Files'
 import Fees from './pages/Fees/Fees'
 import Notifications from './pages/Notifications/Notifications'
 import Analytics from './pages/Analytics/Analytics'
+import Jobs from './pages/Jobs/Jobs'
 
 function App() {
   return (
@@ -44,10 +47,13 @@ function App() {
           <Route path="exams" element={<Exams />} />
           <Route path="results" element={<Results />} />
           <Route path="timetable" element={<Timetable />} />
+          <Route path="curriculum" element={<Curriculum />} />
+          <Route path="workload" element={<Workload />} />
           <Route path="files" element={<Files />} />
           <Route path="fees" element={<Fees />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="jobs" element={<Jobs />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

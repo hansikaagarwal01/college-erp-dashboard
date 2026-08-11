@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
 const getPagination = require("../utils/pagination");
 const escapeRegex = require("../utils/escapeRegex");
+const { tenantScope, tenantCreate } = require("../utils/tenantScope");
 
 const countMap = (rows) =>
   rows.reduce((acc, row) => {
@@ -49,7 +50,7 @@ const getDepartments = asyncHandler(async (req, res) => {
   const { search = "", status } = req.query;
   const { page, limit, skip } = getPagination(req.query);
 
-  const query = {};
+  const query = { ...tenantScope(req) };
 
   if (search) {
     const regex = new RegExp(escapeRegex(search), "i");
@@ -82,7 +83,7 @@ const getDepartments = asyncHandler(async (req, res) => {
 
 // Get Department By ID
 const getDepartmentById = asyncHandler(async (req, res) => {
-  const department = await Department.findById(req.params.id);
+  const department = await Department.findOne({ _id: req.params.id, ...tenantScope(req) });
 
   if (!department) {
     throw new AppError("Department not found", 404);
@@ -102,7 +103,7 @@ const getDepartmentById = asyncHandler(async (req, res) => {
 
 // Create Department
 const createDepartment = asyncHandler(async (req, res) => {
-  const department = await Department.create(req.body);
+  const department = await Department.create({ ...req.body, ...tenantCreate(req) });
 
   res.status(201).json({
     success: true,
@@ -113,10 +114,14 @@ const createDepartment = asyncHandler(async (req, res) => {
 
 // Update Department
 const updateDepartment = asyncHandler(async (req, res) => {
-  const department = await Department.findByIdAndUpdate(req.params.id, req.body, {
-    returnDocument: "after",
-    runValidators: true,
-  });
+  const department = await Department.findOneAndUpdate(
+    { _id: req.params.id, ...tenantScope(req) },
+    req.body,
+    {
+      returnDocument: "after",
+      runValidators: true,
+    }
+  );
 
   if (!department) {
     throw new AppError("Department not found", 404);
@@ -131,7 +136,7 @@ const updateDepartment = asyncHandler(async (req, res) => {
 
 // Delete Department
 const deleteDepartment = asyncHandler(async (req, res) => {
-  const department = await Department.findByIdAndDelete(req.params.id);
+  const department = await Department.findOneAndDelete({ _id: req.params.id, ...tenantScope(req) });
 
   if (!department) {
     throw new AppError("Department not found", 404);

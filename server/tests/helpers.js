@@ -15,6 +15,7 @@ const setupTestEnv = () => {
   process.env.PASSWORD_HISTORY_LENGTH = "3";
   process.env.PASSWORD_MAX_AGE_DAYS = "0";
   process.env.REQUIRE_EMAIL_VERIFICATION = "false";
+  process.env.WORKLOAD_MAX_WEEKLY_HOURS = "12";
 };
 
 const startDb = async () => {

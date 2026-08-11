@@ -11,9 +11,16 @@ const courseSchema = new mongoose.Schema(
     courseCode: {
       type: String,
       required: true,
-      unique: true,
       uppercase: true,
+      index: true,
       trim: true,
+    },
+
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      index: true,
+      default: null,
     },
 
     department: {
@@ -50,5 +57,7 @@ const courseSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+courseSchema.index({ tenantId: 1, courseCode: 1 }, { unique: true });
 
 module.exports = mongoose.model("Course", courseSchema);

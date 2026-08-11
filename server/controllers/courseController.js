@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
 const getPagination = require("../utils/pagination");
 const escapeRegex = require("../utils/escapeRegex");
+const { tenantScope, tenantCreate } = require("../utils/tenantScope");
 
 const DEPARTMENT_FIELDS = "departmentName departmentCode";
 
@@ -43,7 +44,7 @@ const getCourses = asyncHandler(async (req, res) => {
   const { search = "", department, semester, status } = req.query;
   const { page, limit, skip } = getPagination(req.query);
 
-  const query = {};
+  const query = { ...tenantScope(req) };
 
   if (search) {
     const regex = new RegExp(escapeRegex(search), "i");
@@ -78,7 +79,9 @@ const getCourses = asyncHandler(async (req, res) => {
 
 // Get Course By ID
 const getCourseById = asyncHandler(async (req, res) => {
-  const course = await Course.findById(req.params.id).populate(POPULATE);
+  const course = await Course.findOne({ _id: req.params.id, ...tenantScope(req) }).populate(
+    POPULATE
+  );
 
   if (!course) {
     throw new AppError("Course not found", 404);
@@ -93,6 +96,7 @@ const createCourse = asyncHandler(async (req, res) => {
 
   const course = await Course.create({
     ...rest,
+    ...tenantCreate(req),
     department: await resolveDepartment(department),
   });
 
@@ -111,10 +115,14 @@ const updateCourse = asyncHandler(async (req, res) => {
 
   if (updates.department) updates.department = await resolveDepartment(updates.department);
 
-  const course = await Course.findByIdAndUpdate(req.params.id, updates, {
-    returnDocument: "after",
-    runValidators: true,
-  });
+  const course = await Course.findOneAndUpdate(
+    { _id: req.params.id, ...tenantScope(req) },
+    updates,
+    {
+      returnDocument: "after",
+      runValidators: true,
+    }
+  );
 
   if (!course) {
     throw new AppError("Course not found", 404);
@@ -131,7 +139,7 @@ const updateCourse = asyncHandler(async (req, res) => {
 
 // Delete Course
 const deleteCourse = asyncHandler(async (req, res) => {
-  const course = await Course.findByIdAndDelete(req.params.id);
+  const course = await Course.findOneAndDelete({ _id: req.params.id, ...tenantScope(req) });
 
   if (!course) {
     throw new AppError("Course not found", 404);
