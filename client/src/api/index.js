@@ -4,6 +4,9 @@ import api from './client'
 export const loginApi = (credentials) => api.post('/auth/login', credentials)
 export const forgotPassword = (payload) => api.post('/auth/forgot-password', payload)
 export const resetPassword = (payload) => api.post('/auth/reset-password', payload)
+export const verifyEmail = (payload) => api.post('/auth/verify-email', payload)
+export const resendVerification = (payload) => api.post('/auth/resend-verification', payload)
+export const changePassword = (payload) => api.post('/auth/change-password', payload)
 
 // Dashboard
 export const getDashboardStats = async () => {

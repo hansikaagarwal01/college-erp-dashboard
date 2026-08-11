@@ -8,6 +8,8 @@ const {
   verifyRefreshToken,
   generateResetToken,
   verifyResetToken,
+  generateVerifyToken,
+  verifyVerifyToken,
 } = require("../utils/token");
 const AppError = require("../utils/AppError");
 const asyncHandler = require("../utils/asyncHandler");
@@ -19,7 +21,28 @@ const toPublicUser = (user) => ({
   email: user.email,
   role: user.role,
   status: user.status,
+  emailVerified: user.emailVerified,
 });
+
+const isPasswordExpired = (user) => {
+  const maxAgeDays = config.security.passwordMaxAgeDays;
+  if (!maxAgeDays || !user.passwordChangedAt) return false;
+  const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+  return Date.now() - user.passwordChangedAt.getTime() > maxAgeMs;
+};
+
+const saveVerificationToken = async (userId, token) =>
+  User.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        emailVerificationToken: hashToken(token),
+        emailVerificationTokenExpiresAt: new Date(
+          Date.now() + 24 * 60 * 60 * 1000
+        ),
+      },
+    }
+  );
 
 // Persist the hashed refresh token + its expiry derived from the JWT
 const saveRefreshToken = async (userId, token) => {
@@ -56,14 +79,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({ name, email, password, role });
 
+  const verificationToken = generateVerifyToken(user._id);
+  await saveVerificationToken(user._id, verificationToken);
+
   res.status(201).json({
     success: true,
-    message: "User registered successfully",
+    message: "User registered successfully. Please verify the email address.",
     data: toPublicUser(user),
+    verificationToken,
+    verifyLink: `${config.clientUrl}/verify-email?token=${verificationToken}`,
   });
 });
 
-// Login — issue access + refresh tokens
+// Login — issue access + refresh tokens, with failed-attempt lockout
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,15 +101,55 @@ const login = asyncHandler(async (req, res) => {
     throw new AppError("Invalid email or password", 401);
   }
 
+  if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+    const minutes = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+    throw new AppError(
+      `Account is temporarily locked. Try again in ${minutes} minute(s).`,
+      429
+    );
+  }
+
   if (user.status !== "Active") {
     throw new AppError("Account is disabled. Contact your administrator.", 401);
+  }
+
+  if (config.security.requireEmailVerification && !user.emailVerified) {
+    throw new AppError("Please verify your email before signing in.", 403);
   }
 
   const isMatch = await user.comparePassword(password);
 
   if (!isMatch) {
+    const attempts = (user.failedLoginAttempts || 0) + 1;
+
+    if (attempts >= config.security.lockoutMaxAttempts) {
+      const lockedUntil = new Date(
+        Date.now() + config.security.lockoutWindowMs
+      );
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { failedLoginAttempts: 0, lockedUntil } }
+      );
+      throw new AppError(
+        `Too many failed attempts. Account locked for ${Math.ceil(
+          config.security.lockoutWindowMs / 60000
+        )} minute(s).`,
+        429
+      );
+    }
+
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { failedLoginAttempts: attempts } }
+    );
     throw new AppError("Invalid email or password", 401);
   }
+
+  // Successful login — clear lockout state
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { failedLoginAttempts: 0, lockedUntil: null } }
+  );
 
   const { accessToken, refreshToken } = issueTokens(user);
   await saveRefreshToken(user._id, refreshToken);
@@ -91,6 +159,8 @@ const login = asyncHandler(async (req, res) => {
     message: "Login successful",
     accessToken,
     refreshToken,
+    emailVerified: user.emailVerified,
+    passwordExpired: isPasswordExpired(user),
     data: toPublicUser(user),
   });
 });
@@ -160,7 +230,118 @@ const logout = asyncHandler(async (req, res) => {
 const me = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
+    passwordExpired: isPasswordExpired(req.user),
     data: toPublicUser(req.user),
+  });
+});
+
+// Verify an email address using a signed verification token
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  let decoded;
+  try {
+    decoded = verifyVerifyToken(token);
+  } catch {
+    throw new AppError("Invalid or expired verification token", 400);
+  }
+
+  const user = await User.findById(decoded.id).select(
+    "+emailVerificationToken +emailVerificationTokenExpiresAt"
+  );
+
+  if (!user) {
+    throw new AppError("Invalid or expired verification token", 400);
+  }
+
+  if (user.emailVerified) {
+    return res.status(200).json({
+      success: true,
+      message: "Email already verified",
+    });
+  }
+
+  if (
+    user.emailVerificationToken !== hashToken(token) ||
+    (user.emailVerificationTokenExpiresAt &&
+      user.emailVerificationTokenExpiresAt.getTime() < Date.now())
+  ) {
+    throw new AppError("Invalid or expired verification token", 400);
+  }
+
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiresAt: null,
+      },
+    }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Email verified successfully",
+  });
+});
+
+// Resend a verification link for an unverified account (dev mode returns token)
+const resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user || user.emailVerified) {
+    // Never reveal whether an account exists
+    return res.status(200).json({
+      success: true,
+      message:
+        "If an unverified account exists for that email, a verification link has been generated.",
+    });
+  }
+
+  const verificationToken = generateVerifyToken(user._id);
+  await saveVerificationToken(user._id, verificationToken);
+
+  res.status(200).json({
+    success: true,
+    message: "Verification link generated",
+    verificationToken,
+    verifyLink: `${config.clientUrl}/verify-email?token=${verificationToken}`,
+  });
+});
+
+// Change the current user's password (current password required, no reuse)
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user._id).select(
+    "+password +passwordHistory"
+  );
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new AppError("Current password is incorrect", 401);
+  }
+
+  if (await user.isPasswordReused(newPassword)) {
+    throw new AppError(
+      "Password has been used recently. Choose a different one.",
+      400
+    );
+  }
+
+  user.setNewPassword(newPassword, config.security.passwordHistoryLength);
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password changed successfully",
   });
 });
 
@@ -204,19 +385,33 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new AppError("Invalid or expired reset token", 400);
   }
 
-  const user = await User.findById(decoded.id).select("+password");
+  const user = await User.findById(decoded.id).select("+password +passwordHistory");
 
   if (!user || user.status !== "Active") {
     throw new AppError("Invalid or expired reset token", 400);
   }
 
-  user.password = password;
+  if (await user.isPasswordReused(password)) {
+    throw new AppError(
+      "Password has been used recently. Choose a different one.",
+      400
+    );
+  }
+
+  user.setNewPassword(password, config.security.passwordHistoryLength);
   await user.save();
 
-  // Invalidate any active refresh tokens
+  // Invalidate any active sessions and clear lockout state
   await User.updateOne(
     { _id: user._id },
-    { $set: { refreshToken: null, refreshTokenExpiresAt: null } }
+    {
+      $set: {
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      },
+    }
   );
 
   res.status(200).json({
@@ -234,6 +429,9 @@ module.exports = {
   me,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerification,
+  changePassword,
   toPublicUser,
   issueTokens,
   saveRefreshToken,

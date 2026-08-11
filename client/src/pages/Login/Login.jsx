@@ -32,7 +32,12 @@ function Login() {
     e.preventDefault()
     setSubmitting(true)
     try {
-      await login(email, password)
+      const data = await login(email, password)
+      if (data.passwordExpired) {
+        toast('Your password has expired. Please set a new one.')
+        navigate('/change-password', { replace: true })
+        return
+      }
       toast.success('Login successful')
       navigate('/dashboard', { replace: true })
     } catch (err) {

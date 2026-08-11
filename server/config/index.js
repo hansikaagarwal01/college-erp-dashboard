@@ -41,6 +41,18 @@ const config = {
     windowMs: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 60 * 1000,
     max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 5,
   },
+  security: {
+    // Lock an account after this many consecutive failed logins
+    lockoutMaxAttempts: Number(process.env.LOCKOUT_MAX_ATTEMPTS) || 5,
+    // Duration the account stays locked after reaching the limit
+    lockoutWindowMs: Number(process.env.LOCKOUT_WINDOW_MS) || 15 * 60 * 1000,
+    // Recent password hashes kept per user to block reuse
+    passwordHistoryLength: Number(process.env.PASSWORD_HISTORY_LENGTH) || 5,
+    // Force a password change after this many days (0 disables expiry)
+    passwordMaxAgeDays: Number(process.env.PASSWORD_MAX_AGE_DAYS) || 0,
+    // Block login until the email address is verified
+    requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === "true",
+  },
   isProduction: process.env.NODE_ENV === "production",
   isTest: process.env.NODE_ENV === "test",
 };

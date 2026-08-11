@@ -32,10 +32,29 @@ const resetPasswordSchema = z.object({
     .max(100),
 });
 
+const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+
+const resendVerificationSchema = z.object({
+  email: z.string().trim().email("Invalid email address").toLowerCase(),
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required").max(100),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100),
+});
+
 module.exports = {
   registerSchema,
   loginSchema,
   refreshSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
+  changePasswordSchema,
 };

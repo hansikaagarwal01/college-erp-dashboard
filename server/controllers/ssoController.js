@@ -84,9 +84,17 @@ const googleCallback = asyncHandler(async (req, res) => {
       name: profile.name || email.split("@")[0],
       email,
       password: crypto.randomBytes(24).toString("hex"),
+      emailVerified: true,
     });
-  } else if (user.status !== "Active") {
-    throw new AppError("Account is disabled. Contact your administrator.", 401);
+  } else {
+    if (user.status !== "Active") {
+      throw new AppError("Account is disabled. Contact your administrator.", 401);
+    }
+    // Google verified the address — mark it verified if it wasn't already
+    if (!user.emailVerified) {
+      await User.updateOne({ _id: user._id }, { $set: { emailVerified: true } });
+      user.emailVerified = true;
+    }
   }
 
   const { accessToken, refreshToken } = issueTokens(user);

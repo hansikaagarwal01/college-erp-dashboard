@@ -20,7 +20,7 @@ const run = async () => {
   if (existing) {
     console.log(`ℹ️  User with email ${email} already exists. Skipping.`);
   } else {
-    await User.create({ name, email, password, role });
+    await User.create({ name, email, password, role, emailVerified: true });
     console.log(`✅ ${role} created: ${email}`);
   }
 

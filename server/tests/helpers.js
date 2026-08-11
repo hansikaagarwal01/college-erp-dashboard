@@ -10,6 +10,11 @@ const setupTestEnv = () => {
   process.env.MONGO_URI = "mongodb://localhost/test";
   process.env.RATE_LIMIT_MAX = "1000";
   process.env.AUTH_RATE_LIMIT_MAX = "1000";
+  process.env.LOCKOUT_MAX_ATTEMPTS = "3";
+  process.env.LOCKOUT_WINDOW_MS = "60000";
+  process.env.PASSWORD_HISTORY_LENGTH = "3";
+  process.env.PASSWORD_MAX_AGE_DAYS = "0";
+  process.env.REQUIRE_EMAIL_VERIFICATION = "false";
 };
 
 const startDb = async () => {

@@ -45,6 +45,21 @@ const verifyResetToken = (token) => {
   return decoded;
 };
 
+const generateVerifyToken = (userId) =>
+  jwt.sign({ id: userId, type: "verify" }, config.jwtSecret, {
+    expiresIn: "24h",
+  });
+
+const verifyVerifyToken = (token) => {
+  const decoded = jwt.verify(token, config.jwtSecret);
+  if (decoded.type !== "verify") {
+    const err = new Error("Invalid token type");
+    err.name = "JsonWebTokenError";
+    throw err;
+  }
+  return decoded;
+};
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,
@@ -53,4 +68,6 @@ module.exports = {
   verifyRefreshToken,
   generateResetToken,
   verifyResetToken,
+  generateVerifyToken,
+  verifyVerifyToken,
 };

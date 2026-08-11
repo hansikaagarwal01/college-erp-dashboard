@@ -7,6 +7,9 @@ const {
   me,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerification,
+  changePassword,
 } = require("../controllers/authController");
 const { protect, requirePermission } = require("../middleware/auth");
 const { authLimiter } = require("../middleware/rateLimiter");
@@ -17,6 +20,9 @@ const {
   refreshSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
+  changePasswordSchema,
 } = require("../validators/authValidator");
 const { googleAuth, googleCallback } = require("../controllers/ssoController");
 
@@ -37,8 +43,30 @@ router.post(
   validate(resetPasswordSchema),
   resetPassword
 );
+router.post(
+  "/verify-email",
+  authLimiter,
+  validate(verifyEmailSchema),
+  verifyEmail
+);
+router.post(
+  "/resend-verification",
+  authLimiter,
+  validate(resendVerificationSchema),
+  resendVerification
+);
 router.get("/google", googleAuth);
 router.get("/google/callback", googleCallback);
+
+// Authenticated
+router.get("/me", protect, me);
+router.post("/logout", protect, logout);
+router.post(
+  "/change-password",
+  protect,
+  validate(changePasswordSchema),
+  changePassword
+);
 
 // Authenticated
 router.get("/me", protect, me);

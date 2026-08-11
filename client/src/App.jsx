@@ -6,6 +6,8 @@ import MainLayout from './layouts/MainLayout'
 import Login from './pages/Login/Login'
 import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail/VerifyEmail'
+import ChangePassword from './pages/ChangePassword/ChangePassword'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Admissions from './pages/Admissions/Admissions'
 import Attendance from './pages/Attendance/Attendance'
@@ -24,6 +26,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route
           path="/"
@@ -35,6 +38,7 @@ function App() {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="change-password" element={<ChangePassword />} />
           <Route path="admissions" element={<Admissions />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="exams" element={<Exams />} />
