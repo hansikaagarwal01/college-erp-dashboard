@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUserGraduate,
@@ -6,12 +6,8 @@ import {
   FaBuilding,
   FaBook,
   FaPlus,
+  FaRedo,
 } from "react-icons/fa";
-
-import students from "../../data/studentData";
-import faculty from "../../data/facultyData";
-import departments from "../../data/departmentData";
-import courses from "../../data/courseData";
 
 import DashboardCard from "../../components/dashboard/DashboardCard";
 import StudentAnalytics from "../../components/dashboard/StudentAnalytics";
@@ -21,6 +17,10 @@ import CourseDistributionChart from "../../components/dashboard/charts/CourseDis
 import RecentActivity from "../../components/dashboard/RecentActivity";
 import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
 import NoticeBoard from "../../components/dashboard/NoticeBoard";
+import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
+import { useAuth } from "../../context/useAuth";
+import { usePermissions } from "../../hooks/usePermissions";
 
 const today = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -39,22 +39,107 @@ function groupByDepartment(list, valueKey) {
   return Object.values(map).sort((a, b) => b[valueKey] - a[valueKey]);
 }
 
+function normalizeStudent(s) {
+  return {
+    ...s,
+    name: `${s.firstName || ""} ${s.lastName || ""}`.trim() || s.name || "",
+    rollNo: s.rollNumber || s.rollNo || "",
+    branch: s.branch || null,
+    status: s.status || "Inactive",
+  };
+}
+
 function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isAdmin } = usePermissions();
 
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
+  const [studentsError, setStudentsError] = useState("");
+
+  const [departmentsList, setDepartmentsList] = useState([]);
+
+  const [facultyList, setFacultyList] = useState([]);
+  const [coursesList, setCoursesList] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const retryAnalytics = () => {
+    setStudentsLoading(true);
+    setStudentsError("");
+    setReloadKey((k) => k + 1);
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get("/students", { params: { limit: 10000 } })
+      .then((res) => {
+        if (active) {
+          setStudents((res.data?.data || []).map(normalizeStudent));
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setStudentsError(
+            getErrorMessage(err, "Unable to load student analytics.")
+          );
+        }
+      });
+
+    api
+      .get("/departments")
+      .then((res) => {
+        if (active && res.data?.data) setDepartmentsList(res.data.data);
+      })
+      .catch(() => {
+        /* keep the list empty if the departments API is unavailable */
+      })
+      .finally(() => {
+        if (active) setStudentsLoading(false);
+      });
+
+    api
+      .get("/faculty")
+      .then((res) => {
+        if (active) setFacultyList(res.data?.data || []);
+      })
+      .catch(() => {
+        /* keep the list empty if the faculty API is unavailable */
+      });
+
+    api
+      .get("/courses")
+      .then((res) => {
+        if (active) setCoursesList(res.data?.data || []);
+      })
+      .catch(() => {
+        /* keep the list empty if the courses API is unavailable */
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
+
+  const realDepartments = departmentsList;
   const activeStudents = students.filter((s) => s.status === "Active").length;
-  const activeFaculty = faculty.filter((f) => f.status === "Active").length;
-  const activeDepartments = departments.filter(
+  const pctActive = students.length
+    ? Math.round((activeStudents / students.length) * 100)
+    : 0;
+  const activeFaculty = facultyList.filter((f) => f.status === "Active").length;
+  const activeDepartments = realDepartments.filter(
     (d) => d.status === "Active"
   ).length;
-  const activeCourses = courses.filter((c) => c.status === "Active").length;
+  const activeCourses = coursesList.filter((c) => c.status === "Active").length;
 
   const kpis = [
     {
       title: "Students",
       value: students.length,
       description: `${activeStudents} currently active`,
-      trend: `${Math.round((activeStudents / students.length) * 100)}% active`,
+      trend: `${pctActive}% active`,
       trendUp: true,
       trendNote: "of all students",
       icon: <FaUserGraduate className="text-xl" />,
@@ -64,9 +149,11 @@ function Dashboard() {
     },
     {
       title: "Faculty",
-      value: faculty.length,
+      value: facultyList.length,
       description: `${activeFaculty} currently active`,
-      trend: `${Math.round((activeFaculty / faculty.length) * 100)}% active`,
+      trend: `${facultyList.length
+        ? Math.round((activeFaculty / facultyList.length) * 100)
+        : 0}% active`,
       trendUp: true,
       trendNote: "of all faculty",
       icon: <FaChalkboardTeacher className="text-xl" />,
@@ -76,9 +163,13 @@ function Dashboard() {
     },
     {
       title: "Departments",
-      value: departments.length,
+      value: realDepartments.length,
       description: `${activeDepartments} currently active`,
-      trend: `${Math.round((activeDepartments / departments.length) * 100)}% active`,
+      trend: `${activeDepartments && realDepartments.length
+        ? Math.round(
+            (activeDepartments / realDepartments.length) * 100
+          )
+        : 0}% active`,
       trendUp: true,
       trendNote: "of all departments",
       icon: <FaBuilding className="text-xl" />,
@@ -88,9 +179,11 @@ function Dashboard() {
     },
     {
       title: "Courses",
-      value: courses.length,
+      value: coursesList.length,
       description: `${activeCourses} currently active`,
-      trend: `${Math.round((activeCourses / courses.length) * 100)}% active`,
+      trend: `${coursesList.length
+        ? Math.round((activeCourses / coursesList.length) * 100)
+        : 0}% active`,
       trendUp: true,
       trendNote: "of all courses",
       icon: <FaBook className="text-xl" />,
@@ -102,17 +195,17 @@ function Dashboard() {
 
   const studentsByDepartment = useMemo(
     () => groupByDepartment(students, "value"),
-    []
+    [students]
   );
 
   const facultyByDepartment = useMemo(
-    () => groupByDepartment(faculty, "value"),
-    []
+    () => groupByDepartment(facultyList, "value"),
+    [facultyList]
   );
 
   const coursesByDepartment = useMemo(() => {
     const map = {};
-    courses.forEach((course) => {
+    coursesList.forEach((course) => {
       const name = course.department || "Unassigned";
       if (!map[name])
         map[name] = { name, courses: 0, active: 0, inactive: 0 };
@@ -121,23 +214,25 @@ function Dashboard() {
       else map[name].inactive += 1;
     });
     return Object.values(map).sort((a, b) => b.courses - a.courses);
-  }, []);
+  }, [coursesList]);
 
   return (
     <div className="page">
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Welcome back, Admin</h1>
+          <h1 className="page-title">Welcome back, {user?.role || "Admin"}</h1>
           <p className="page-subtitle">
             Here's what's happening across your college today · {today}
           </p>
         </div>
 
-        <button onClick={() => navigate("/students/add")} className="btn-primary">
-          <FaPlus />
-          Add Student
-        </button>
+        {isAdmin && (
+          <button onClick={() => navigate("/students/add")} className="btn-primary">
+            <FaPlus />
+            Add Student
+          </button>
+        )}
       </div>
 
       {/* KPI cards */}
@@ -149,12 +244,39 @@ function Dashboard() {
 
       {/* Student distribution drill-down */}
       <div className="mt-6">
-        <StudentAnalytics />
+        {studentsLoading ? (
+          <div className="card">
+            <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+              <span className="spinner" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Loading student analytics…
+              </p>
+            </div>
+          </div>
+        ) : studentsError ? (
+          <div className="card">
+            <EmptyState
+              message="Student analytics unavailable"
+              hint={studentsError}
+            />
+            <div className="flex justify-center pb-6">
+              <button onClick={retryAnalytics} className="btn-secondary">
+                <FaRedo />
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <StudentAnalytics students={students} />
+        )}
       </div>
 
       {/* Additional analytics */}
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <DepartmentChart data={studentsByDepartment} title="Students by Department" />
+        <DepartmentChart
+          data={studentsByDepartment}
+          title="Students by Department"
+        />
         <FacultyDepartmentChart data={facultyByDepartment} />
         <CourseDistributionChart data={coursesByDepartment} />
       </div>

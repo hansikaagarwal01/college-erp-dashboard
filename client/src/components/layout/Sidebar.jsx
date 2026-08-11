@@ -13,19 +13,48 @@ import {
 } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 
+import { useAuth } from "../../context/useAuth";
+import { ROLES, canAccess } from "../../utils/permissions";
+
 const menuItems = [
   { name: "Dashboard", path: "/dashboard", icon: <FaTachometerAlt /> },
-  { name: "Students", path: "/students", icon: <FaUserGraduate /> },
-  { name: "Faculty", path: "/faculty", icon: <FaChalkboardTeacher /> },
-  { name: "Departments", path: "/departments", icon: <FaBuilding /> },
-  { name: "Courses", path: "/courses", icon: <FaBook /> },
-  { name: "Timetable", path: "/timetable", icon: <FaCalendarAlt /> },
+  {
+    name: "Students",
+    path: "/students",
+    icon: <FaUserGraduate />,
+    roles: [ROLES.ADMIN],
+  },
+  {
+    name: "Faculty",
+    path: "/faculty",
+    icon: <FaChalkboardTeacher />,
+    roles: [ROLES.ADMIN],
+  },
+  {
+    name: "Departments",
+    path: "/departments",
+    icon: <FaBuilding />,
+    roles: [ROLES.ADMIN],
+  },
+  {
+    name: "Courses",
+    path: "/courses",
+    icon: <FaBook />,
+    roles: [ROLES.ADMIN],
+  },
+  {
+    name: "Timetable",
+    path: "/timetable",
+    icon: <FaCalendarAlt />,
+    roles: [ROLES.ADMIN],
+  },
 ];
 
 const iconButtonClass =
   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors duration-200 hover:bg-gray-800 hover:text-white";
 
 function Sidebar({ open, onClose }) {
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("sidebar-collapsed") === "true";
@@ -44,6 +73,9 @@ function Sidebar({ open, onClose }) {
   };
 
   const compact = collapsed && !open;
+  const visibleItems = menuItems.filter((item) =>
+    canAccess(user?.role, item.roles)
+  );
 
   return (
     <aside
@@ -87,7 +119,7 @@ function Sidebar({ open, onClose }) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {menuItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

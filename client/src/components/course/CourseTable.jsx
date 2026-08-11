@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import EmptyState from "../ui/EmptyState";
+import { usePermissions } from "../../hooks/usePermissions";
 
 function CourseTable({ courses, onDelete, hasFilters }) {
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
 
   if (courses.length === 0) {
     return (
@@ -80,25 +82,29 @@ function CourseTable({ courses, onDelete, hasFilters }) {
                     <FaEye />
                   </button>
 
-                  <button
-                    onClick={() =>
-                      navigate(`/courses/edit/${course.id}`)
-                    }
-                    className="btn-edit"
-                    aria-label={`Edit ${course.courseName}`}
-                    title="Edit"
-                  >
-                    <FaEdit />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() =>
+                        navigate(`/courses/edit/${course.id}`)
+                      }
+                      className="btn-edit"
+                      aria-label={`Edit ${course.courseName}`}
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => onDelete(course)}
-                    className="btn-delete"
-                    aria-label={`Delete ${course.courseName}`}
-                    title="Delete"
-                  >
-                    <FaTrash />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDelete(course)}
+                      className="btn-delete"
+                      aria-label={`Delete ${course.courseName}`}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

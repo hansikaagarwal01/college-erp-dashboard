@@ -1,9 +1,29 @@
-import { FaBars, FaBell, FaSearch, FaMoon, FaSun } from "react-icons/fa";
+import {
+  FaBars,
+  FaBell,
+  FaSearch,
+  FaMoon,
+  FaSun,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 import { useTheme } from "../../context/useTheme";
+import { useAuth } from "../../context/useAuth";
+import { getRoleLabel } from "../../utils/permissions";
 
 function Navbar({ onMenuClick }) {
   const { darkMode, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const role = user?.role || "Admin";
+  const initials = role.charAt(0).toUpperCase();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md dark:border-gray-700 dark:bg-gray-900/80 sm:px-6">
@@ -53,13 +73,25 @@ function Navbar({ onMenuClick }) {
         {/* Profile */}
         <div className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg py-1 pl-1 pr-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-semibold text-white">
-            A
+            {initials}
           </span>
           <div className="hidden leading-tight sm:block">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Admin</h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{role}</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {getRoleLabel(role)}
+            </p>
           </div>
         </div>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-red-400"
+          aria-label="Logout"
+          title="Logout"
+        >
+          <FaSignOutAlt />
+        </button>
       </div>
     </header>
   );

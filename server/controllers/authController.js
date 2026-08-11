@@ -6,9 +6,9 @@ const bcrypt = require("bcryptjs");
 const generateToken = (id) => {
   return jwt.sign(
     { id },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || "college-erp-dev-secret",
     {
-      expiresIn: process.env.JWT_EXPIRE,
+      expiresIn: process.env.JWT_EXPIRE || "30d",
     }
   );
 };

@@ -11,24 +11,26 @@ const DEFAULT_DEPARTMENTS = [
   "Design",
 ];
 
-const COURSES = ["B.Tech", "BBA", "B.Des"];
-
-const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+const DESIGNATIONS = [
+  "Professor",
+  "Associate Professor",
+  "Assistant Professor",
+  "Lecturer",
+  "Lab Instructor",
+];
 
 function buildInitial(initialData) {
   return {
     firstName: initialData?.firstName || "",
     lastName: initialData?.lastName || "",
-    rollNumber: initialData?.rollNumber || "",
+    employeeId: initialData?.employeeId || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
     gender: initialData?.gender || "",
-    course: initialData?.course || "",
     department: initialData?.department || "",
-    semester: initialData?.semester ?? "",
-    batch: initialData?.batch ?? "",
-    section: initialData?.section || "",
-    address: initialData?.address || "",
+    designation: initialData?.designation || "",
+    qualification: initialData?.qualification || "",
+    experience: initialData?.experience ?? "",
     status: initialData?.status || "Active",
   };
 }
@@ -36,14 +38,10 @@ function buildInitial(initialData) {
 function validate(formData) {
   const errors = {};
 
-  if (!formData.firstName.trim()) {
-    errors.firstName = "First name is required";
-  }
-  if (!formData.lastName.trim()) {
-    errors.lastName = "Last name is required";
-  }
-  if (!formData.rollNumber.trim()) {
-    errors.rollNumber = "Roll number is required";
+  if (!formData.firstName.trim()) errors.firstName = "First name is required";
+  if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+  if (!formData.employeeId.trim()) {
+    errors.employeeId = "Employee ID is required";
   }
   if (!formData.email.trim()) {
     errors.email = "Email is required";
@@ -55,29 +53,24 @@ function validate(formData) {
   } else if (!/^[0-9+\-\s()]{7,15}$/.test(formData.phone.trim())) {
     errors.phone = "Enter a valid phone number";
   }
-  if (!formData.gender) {
-    errors.gender = "Please select a gender";
-  }
-  if (!formData.course.trim()) {
-    errors.course = "Please select a course";
-  }
+  if (!formData.gender) errors.gender = "Please select a gender";
   if (!formData.department.trim()) {
     errors.department = "Department is required";
   }
-  if (formData.semester === "" || formData.semester === null) {
-    errors.semester = "Please select a semester";
+  if (!formData.designation.trim()) {
+    errors.designation = "Designation is required";
   }
-  if (formData.batch === "" || formData.batch === null) {
-    errors.batch = "Batch year is required";
+  if (!formData.qualification.trim()) {
+    errors.qualification = "Qualification is required";
+  }
+  if (formData.experience === "" || formData.experience === null) {
+    errors.experience = "Experience is required";
   } else if (
-    Number.isNaN(Number(formData.batch)) ||
-    Number(formData.batch) < 2000 ||
-    Number(formData.batch) > 2100
+    Number.isNaN(Number(formData.experience)) ||
+    Number(formData.experience) < 0 ||
+    Number(formData.experience) > 60
   ) {
-    errors.batch = "Enter a valid batch year (e.g. 2026)";
-  }
-  if (!formData.section.trim()) {
-    errors.section = "Please select a section";
+    errors.experience = "Enter valid years of experience (0–60)";
   }
 
   return errors;
@@ -88,7 +81,7 @@ function FieldError({ message }) {
   return <p className="mt-1 text-xs text-red-500">{message}</p>;
 }
 
-function StudentForm({ initialData }) {
+function FacultyForm({ initialData }) {
   const navigate = useNavigate();
 
   const isEditing = Boolean(initialData);
@@ -148,30 +141,28 @@ function StudentForm({ initialData }) {
     const payload = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
-      rollNumber: formData.rollNumber.trim(),
+      employeeId: formData.employeeId.trim(),
       email: formData.email.trim(),
       phone: formData.phone.trim(),
       gender: formData.gender,
-      course: formData.course.trim(),
       department: formData.department.trim(),
-      semester: Number(formData.semester),
-      batch: Number(formData.batch),
-      section: formData.section.trim(),
-      address: formData.address.trim(),
+      designation: formData.designation.trim(),
+      qualification: formData.qualification.trim(),
+      experience: Number(formData.experience),
       status: formData.status,
     };
 
     setSubmitting(true);
     try {
       if (isEditing) {
-        await api.put(`/students/${initialData._id}`, payload);
-        setSuccessMessage("Student updated successfully!");
+        await api.put(`/faculty/${initialData._id}`, payload);
+        setSuccessMessage("Faculty member updated successfully!");
       } else {
-        await api.post("/students", payload);
-        setSuccessMessage("Student added successfully!");
+        await api.post("/faculty", payload);
+        setSuccessMessage("Faculty member added successfully!");
       }
 
-      setTimeout(() => navigate("/students"), 800);
+      setTimeout(() => navigate("/faculty"), 800);
     } catch (error) {
       setSubmitError(getErrorMessage(error));
     } finally {
@@ -182,7 +173,7 @@ function StudentForm({ initialData }) {
   return (
     <form onSubmit={handleSubmit} className="card p-6">
       <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-        {isEditing ? "Student Information" : "New Student"}
+        {isEditing ? "Faculty Information" : "New Faculty Member"}
       </h2>
 
       {/* Success message */}
@@ -217,7 +208,7 @@ function StudentForm({ initialData }) {
             name="firstName"
             value={formData.firstName}
             onChange={handleChange}
-            placeholder="Rahul"
+            placeholder="Anil"
             className="input"
           />
           <FieldError message={errors.firstName} />
@@ -237,19 +228,19 @@ function StudentForm({ initialData }) {
           <FieldError message={errors.lastName} />
         </div>
 
-        {/* Roll Number */}
+        {/* Employee ID */}
         <div>
-          <label className="label">Roll Number</label>
+          <label className="label">Employee ID</label>
           <input
             type="text"
-            name="rollNumber"
-            value={formData.rollNumber}
+            name="employeeId"
+            value={formData.employeeId}
             onChange={handleChange}
-            placeholder="CSE001"
+            placeholder="EMP104"
             className="input"
             disabled={isEditing}
           />
-          <FieldError message={errors.rollNumber} />
+          <FieldError message={errors.employeeId} />
         </div>
 
         {/* Email */}
@@ -260,7 +251,7 @@ function StudentForm({ initialData }) {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="rahul.sharma@college.edu"
+            placeholder="anil.sharma@college.edu"
             className="input"
           />
           <FieldError message={errors.email} />
@@ -268,7 +259,7 @@ function StudentForm({ initialData }) {
 
         {/* Phone */}
         <div>
-          <label className="label">Phone Number</label>
+          <label className="label">Phone</label>
           <input
             type="tel"
             name="phone"
@@ -295,25 +286,6 @@ function StudentForm({ initialData }) {
             <option value="Other">Other</option>
           </select>
           <FieldError message={errors.gender} />
-        </div>
-
-        {/* Course */}
-        <div>
-          <label className="label">Course</label>
-          <select
-            name="course"
-            value={formData.course}
-            onChange={handleChange}
-            className={`select ${errors.course ? "border-red-400" : ""}`}
-          >
-            <option value="">Select Course</option>
-            {COURSES.map((course) => (
-              <option key={course} value={course}>
-                {course}
-              </option>
-            ))}
-          </select>
-          <FieldError message={errors.course} />
         </div>
 
         {/* Department */}
@@ -346,57 +318,54 @@ function StudentForm({ initialData }) {
           <FieldError message={errors.department} />
         </div>
 
-        {/* Batch */}
+        {/* Designation */}
         <div>
-          <label className="label">Batch</label>
-          <input
-            type="number"
-            name="batch"
-            value={formData.batch}
-            onChange={handleChange}
-            placeholder="2026"
-            min="2000"
-            max="2100"
-            step="1"
-            className="input"
-          />
-          <FieldError message={errors.batch} />
-        </div>
-
-        {/* Semester */}
-        <div>
-          <label className="label">Semester</label>
+          <label className="label">Designation</label>
           <select
-            name="semester"
-            value={formData.semester}
+            name="designation"
+            value={formData.designation}
             onChange={handleChange}
-            className={`select ${errors.semester ? "border-red-400" : ""}`}
+            className={`select ${errors.designation ? "border-red-400" : ""}`}
           >
-            <option value="">Select Semester</option>
-            {SEMESTERS.map((semester) => (
-              <option key={semester} value={semester}>
-                {semester}
+            <option value="">Select Designation</option>
+            {DESIGNATIONS.map((designation) => (
+              <option key={designation} value={designation}>
+                {designation}
               </option>
             ))}
           </select>
-          <FieldError message={errors.semester} />
+          <FieldError message={errors.designation} />
         </div>
 
-        {/* Section */}
+        {/* Qualification */}
         <div>
-          <label className="label">Section</label>
-          <select
-            name="section"
-            value={formData.section}
+          <label className="label">Qualification</label>
+          <input
+            type="text"
+            name="qualification"
+            value={formData.qualification}
             onChange={handleChange}
-            className={`select ${errors.section ? "border-red-400" : ""}`}
-          >
-            <option value="">Select Section</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
-          <FieldError message={errors.section} />
+            placeholder="Ph.D., M.Tech"
+            className="input"
+          />
+          <FieldError message={errors.qualification} />
+        </div>
+
+        {/* Experience */}
+        <div>
+          <label className="label">Experience (Years)</label>
+          <input
+            type="number"
+            name="experience"
+            value={formData.experience}
+            onChange={handleChange}
+            placeholder="5"
+            min="0"
+            max="60"
+            step="1"
+            className="input"
+          />
+          <FieldError message={errors.experience} />
         </div>
 
         {/* Status */}
@@ -412,26 +381,13 @@ function StudentForm({ initialData }) {
             <option value="Inactive">Inactive</option>
           </select>
         </div>
-
-        {/* Address */}
-        <div className="md:col-span-2">
-          <label className="label">Address</label>
-          <textarea
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            placeholder="Address (optional)"
-            className="input"
-            rows="3"
-          ></textarea>
-        </div>
       </div>
 
       {/* Buttons */}
       <div className="mt-8 flex justify-end gap-4">
         <button
           type="button"
-          onClick={() => navigate("/students")}
+          onClick={() => navigate("/faculty")}
           className="btn-secondary"
           disabled={submitting}
         >
@@ -444,12 +400,12 @@ function StudentForm({ initialData }) {
               ? "Updating…"
               : "Saving…"
             : isEditing
-              ? "Update Student"
-              : "Save Student"}
+              ? "Update Faculty"
+              : "Save Faculty"}
         </button>
       </div>
     </form>
   );
 }
 
-export default StudentForm;
+export default FacultyForm;

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaUserGraduate } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
+import FacultyForm from "../../components/faculty/FacultyForm";
 
 function AddFaculty() {
   const navigate = useNavigate();
@@ -23,19 +24,7 @@ function AddFaculty() {
         </div>
       </div>
 
-      <div className="card p-6">
-        <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-            <FaUserGraduate className="h-6 w-6" />
-          </div>
-          <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
-            Faculty form coming soon
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            The faculty registration form will be available here.
-          </p>
-        </div>
-      </div>
+      <FacultyForm />
     </div>
   );
 }

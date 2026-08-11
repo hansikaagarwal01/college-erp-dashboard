@@ -6,6 +6,7 @@ import {
   FaClock,
 } from "react-icons/fa";
 import { DAYS, TIME_SLOTS, formatTime } from "../../data/timetableData";
+import { usePermissions } from "../../hooks/usePermissions";
 
 function TimetableModal({
   mode,
@@ -16,6 +17,7 @@ function TimetableModal({
   onRequestEdit,
   onDelete,
 }) {
+  const { isAdmin } = usePermissions();
   const [formData, setFormData] = useState(() => {
     const currentCourse = entry
       ? courses.find((c) => c.courseCode === entry.courseCode)
@@ -24,12 +26,14 @@ function TimetableModal({
     return {
       day: entry?.day || "Monday",
       time: entry?.startTime || "09:00",
-      courseId: currentCourse ? String(currentCourse.id) : "",
+      courseId: currentCourse ? String(currentCourse._id) : "",
       faculty: entry?.faculty || "",
       room: entry?.room || "",
       section: entry?.section || "A",
     };
   });
+
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -38,30 +42,35 @@ function TimetableModal({
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const selectedCourse = courses.find(
-      (c) => c.id === Number(formData.courseId)
+      (c) => String(c._id) === String(formData.courseId)
     );
 
     if (!selectedCourse) return;
 
     const slot = TIME_SLOTS.find((s) => s.start === formData.time);
 
-    onSave({
-      id: entry?.id,
-      day: formData.day,
-      startTime: slot.start,
-      endTime: slot.end,
-      courseCode: selectedCourse.courseCode,
-      courseName: selectedCourse.courseName,
-      department: selectedCourse.department,
-      semester: selectedCourse.semester,
-      faculty: formData.faculty,
-      room: formData.room,
-      section: formData.section,
-    });
+    setSubmitting(true);
+    try {
+      await onSave({
+        _id: entry?._id,
+        day: formData.day,
+        startTime: slot.start,
+        endTime: slot.end,
+        courseCode: selectedCourse.courseCode,
+        courseName: selectedCourse.courseName,
+        department: selectedCourse.department,
+        semester: selectedCourse.semester,
+        faculty: formData.faculty,
+        room: formData.room,
+        section: formData.section,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const viewDetails = entry
@@ -137,15 +146,19 @@ function TimetableModal({
                 Close
               </button>
 
-              <button onClick={onDelete} className="btn-delete">
-                <FaTrash />
-                Delete
-              </button>
+              {isAdmin && (
+                <button onClick={onDelete} className="btn-delete">
+                  <FaTrash />
+                  Delete
+                </button>
+              )}
 
-              <button onClick={onRequestEdit} className="btn-primary">
-                <FaEdit />
-                Edit
-              </button>
+              {isAdmin && (
+                <button onClick={onRequestEdit} className="btn-primary">
+                  <FaEdit />
+                  Edit
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -199,7 +212,10 @@ function TimetableModal({
                 >
                   <option value="">Select Course</option>
                   {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
+                    <option
+                      key={course._id}
+                      value={course._id}
+                    >
                       {course.courseCode} – {course.courseName}
                     </option>
                   ))}
@@ -252,12 +268,16 @@ function TimetableModal({
             </div>
 
             <div className="mt-8 flex justify-end gap-3">
-              <button type="button" onClick={onClose} className="btn-secondary">
+              <button type="button" onClick={onClose} className="btn-secondary" disabled={submitting}>
                 Cancel
               </button>
 
-              <button type="submit" className="btn-primary">
-                {entry ? "Update Class" : "Add Class"}
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                {submitting
+                  ? "Saving…"
+                  : entry
+                    ? "Update Class"
+                    : "Add Class"}
               </button>
             </div>
           </form>

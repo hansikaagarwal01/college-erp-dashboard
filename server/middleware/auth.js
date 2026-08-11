@@ -19,7 +19,10 @@ const protect = async (req, res, next) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "college-erp-dev-secret"
+    );
 
     req.admin = await Admin.findById(decoded.id);
 

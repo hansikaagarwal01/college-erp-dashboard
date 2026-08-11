@@ -1,8 +1,41 @@
-import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaUserGraduate } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
+import FacultyForm from "../../components/faculty/FacultyForm";
+import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
 
 function EditFaculty() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const [faculty, setFaculty] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get(`/faculty/${id}`)
+      .then((res) => {
+        if (active) setFaculty(res.data?.data || null);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(
+            getErrorMessage(err, "Unable to load faculty member. Please try again.")
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   return (
     <div className="page">
@@ -23,19 +56,26 @@ function EditFaculty() {
         </div>
       </div>
 
-      <div className="card p-6">
-        <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-            <FaUserGraduate className="h-6 w-6" />
+      {loading ? (
+        <div className="card">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+            <span className="spinner" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading faculty member…
+            </p>
           </div>
-          <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
-            Faculty form coming soon
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            The faculty edit form will be available here.
-          </p>
         </div>
-      </div>
+      ) : error ? (
+        <div className="card">
+          <EmptyState message="Could not load faculty member" hint={error} />
+        </div>
+      ) : faculty ? (
+        <FacultyForm initialData={faculty} />
+      ) : (
+        <div className="card">
+          <EmptyState message="Faculty member not found" hint="This record may have been deleted." />
+        </div>
+      )}
     </div>
   );
 }

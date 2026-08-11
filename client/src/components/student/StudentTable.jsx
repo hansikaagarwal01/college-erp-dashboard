@@ -5,10 +5,12 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import EmptyState from "../ui/EmptyState";
+import { usePermissions } from "../../hooks/usePermissions";
 
 
-function StudentTable({ students }) {
+function StudentTable({ students, onDelete }) {
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
 
   if (students.length === 0) {
     return (
@@ -95,27 +97,34 @@ function StudentTable({ students }) {
                     }
                     className="btn-view"
                     aria-label={`View ${student.name}`}
+                    title="View"
                   >
                     <FaEye />
                   </button>
 
-                  <button
-                    onClick={() =>
-                      navigate(`/students/edit/${student.id}`)
-                    }
-                    className="btn-edit"
-                    aria-label={`Edit ${student.name}`}
-                  >
-                    <FaEdit />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() =>
+                        navigate(`/students/edit/${student.id}`)
+                      }
+                      className="btn-edit"
+                      aria-label={`Edit ${student.name}`}
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => alert(`Delete ${student.name}`)}
-                    className="btn-delete"
-                    aria-label={`Delete ${student.name}`}
-                  >
-                    <FaTrash />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDelete(student)}
+                      className="btn-delete"
+                      aria-label={`Delete ${student.name}`}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

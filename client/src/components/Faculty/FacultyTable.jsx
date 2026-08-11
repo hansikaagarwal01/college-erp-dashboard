@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import EmptyState from "../ui/EmptyState";
+import { usePermissions } from "../../hooks/usePermissions";
 
-function FacultyTable({ faculty }) {
+function FacultyTable({ faculty, onDelete }) {
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
 
   if (faculty.length === 0) {
     return (
@@ -73,27 +75,34 @@ function FacultyTable({ faculty }) {
                     }
                     className="btn-view"
                     aria-label={`View ${teacher.name}`}
+                    title="View"
                   >
                     <FaEye />
                   </button>
 
-                  <button
-                    onClick={() =>
-                      navigate(`/faculty/edit/${teacher.id}`)
-                    }
-                    className="btn-edit"
-                    aria-label={`Edit ${teacher.name}`}
-                  >
-                    <FaEdit />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() =>
+                        navigate(`/faculty/edit/${teacher.id}`)
+                      }
+                      className="btn-edit"
+                      aria-label={`Edit ${teacher.name}`}
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => alert(`Delete ${teacher.name}`)}
-                    className="btn-delete"
-                    aria-label={`Delete ${teacher.name}`}
-                  >
-                    <FaTrash />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDelete(teacher)}
+                      className="btn-delete"
+                      aria-label={`Delete ${teacher.name}`}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

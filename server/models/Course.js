@@ -31,6 +31,11 @@ const courseSchema = new mongoose.Schema(
       required: true,
     },
 
+    instructor: {
+      type: String,
+      default: "",
+    },
+
     description: {
       type: String,
       default: "",

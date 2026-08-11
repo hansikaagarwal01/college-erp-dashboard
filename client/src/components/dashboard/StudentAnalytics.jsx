@@ -23,7 +23,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import students from "../../data/studentData";
 import { useTheme } from "../../context/useTheme";
 import EmptyState from "../ui/EmptyState";
 import { PALETTE, chartColors } from "./charts/chartTheme";
@@ -359,7 +358,7 @@ function YearLevel({ currentFilter, yearData }) {
   );
 }
 
-function StudentAnalytics() {
+function StudentAnalytics({ students = [] }) {
   const timerRef = useRef(null);
 
   const [program, setProgram] = useState(null);
@@ -378,7 +377,7 @@ function StudentAnalytics() {
       if (!ordered.includes(p)) ordered.push(p);
     });
     return ordered;
-  }, []);
+  }, [students]);
 
   const branches = useMemo(() => {
     if (!program) return [];
@@ -390,7 +389,7 @@ function StudentAnalytics() {
           .filter(Boolean)
       )
     );
-  }, [program]);
+  }, [program, students]);
 
   const hasBranchLevel = branches.length > 0;
 
@@ -416,7 +415,7 @@ function StudentAnalytics() {
         (!program || s.course === program) &&
         (!branch || s.branch === branch)
     );
-  }, [program, branch]);
+  }, [program, branch, students]);
 
   const yearData = yearBreakdown(currentFilter);
 
