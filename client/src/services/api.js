@@ -3,7 +3,7 @@ import axios from "axios";
 const API_TIMEOUT_MS = 15000;
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   headers: { "Content-Type": "application/json" },
   timeout: API_TIMEOUT_MS,
 });
@@ -46,7 +46,7 @@ export function getErrorMessage(error, fallback = "Something went wrong. Please 
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || localStorage.getItem("erp_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
