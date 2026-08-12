@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -173,13 +173,21 @@ function TransitionSpinner() {
 function StudentAnalytics() {
   const { darkMode } = useTheme();
   const dark = darkMode;
-  const timerRef = useRef(null);
 
   const [program, setProgram] = useState(null);
   const [branch, setBranch] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
+  const [pendingChange, setPendingChange] = useState(null);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => {
+    if (!pendingChange) return;
+    const timer = setTimeout(() => {
+      pendingChange();
+      setTransitioning(false);
+      setPendingChange(null);
+    }, 320);
+    return () => clearTimeout(timer);
+  }, [pendingChange]);
 
   const total = students.length;
 
@@ -231,11 +239,7 @@ function StudentAnalytics() {
 
   const drill = (next) => {
     setTransitioning(true);
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      next();
-      setTransitioning(false);
-    }, 320);
+    setPendingChange(() => next);
   };
 
   const openProgram = (p) =>

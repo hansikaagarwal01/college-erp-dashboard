@@ -13,7 +13,6 @@ import {
   FaClipboardCheck,
   FaFlask,
   FaFileAlt,
-  FaClock,
   FaBookOpen,
   FaBalanceScale,
   FaFolder,
@@ -21,7 +20,6 @@ import {
   FaBell,
   FaChartBar,
   FaTools,
-  FaBullhorn,
   FaGraduationCap,
 } from 'react-icons/fa'
 import { NavLink } from 'react-router-dom'
