@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar'
 import Navbar from '../components/layout/Navbar'
 
-function MainLayout() {
+function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const closeSidebar = () => setSidebarOpen(false)
@@ -26,7 +26,7 @@ function MainLayout() {
         <Navbar onMenuClick={openSidebar} />
 
         <main className="bg-gray-50 min-h-screen dark:bg-gray-950">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

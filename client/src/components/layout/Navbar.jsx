@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FaBars, FaBell, FaSearch, FaMoon, FaSun } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/useTheme'
+import { useTheme } from '../../context/ThemeContext'
 import useRealtimeNotifications from '../../hooks/useRealtimeNotifications'
 import { getUnreadCount } from '../../api'
 

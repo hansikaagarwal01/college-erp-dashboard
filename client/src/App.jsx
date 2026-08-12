@@ -4,38 +4,38 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
 
-// Auth pages (HEAD)
+// Auth pages
 import Login from './pages/Login/Login'
 import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail/VerifyEmail'
 import ChangePassword from './pages/ChangePassword/ChangePassword'
 
-// Dashboard (upstream lowercase path)
-import Dashboard from './pages/dashboard/dashboard'
+// Dashboard
+import Dashboard from './pages/Dashboard/Dashboard'
 
-// CRUD modules (upstream)
-import Students from './pages/students/students'
-import AddStudent from './pages/students/Addstudent'
-import EditStudent from './pages/students/EditStudent'
-import StudentDetails from './pages/students/StudentDetails'
+// CRUD modules (Standardized PascalCase paths)
+import Students from './pages/Students/Students'
+import AddStudent from './pages/Students/AddStudent'
+import EditStudent from './pages/Students/EditStudent'
+import StudentDetails from './pages/Students/StudentDetails'
 
-import Faculty from './pages/faculty/Faculty'
-import AddFaculty from './pages/faculty/Addfaculty'
-import EditFaculty from './pages/faculty/EditFaculty'
-import FacultyDetails from './pages/faculty/FacultyDetails'
+import Faculty from './pages/Faculty/Faculty'
+import AddFaculty from './pages/Faculty/AddFaculty'
+import EditFaculty from './pages/Faculty/EditFaculty'
+import FacultyDetails from './pages/Faculty/FacultyDetails'
 
-import Departments from './pages/department/Departments'
-import AddDepartment from './pages/department/AddDepartment'
-import EditDepartment from './pages/department/EditDepartment'
-import DepartmentDetails from './pages/department/DepartmentDetails'
+import Departments from './pages/Departments/Departments'
+import AddDepartment from './pages/Departments/AddDepartment'
+import EditDepartment from './pages/Departments/EditDepartment'
+import DepartmentDetails from './pages/Departments/DepartmentDetails'
 
-import Courses from './pages/courses/Courses'
-import AddCourse from './pages/courses/AddCourse'
-import EditCourse from './pages/courses/EditCourse'
-import CourseDetails from './pages/courses/CourseDetails'
+import Courses from './pages/Courses/Courses'
+import AddCourse from './pages/Courses/AddCourse'
+import EditCourse from './pages/Courses/EditCourse'
+import CourseDetails from './pages/Courses/CourseDetails'
 
-// ERP modules (HEAD)
+// ERP modules
 import Admissions from './pages/Admissions/Admissions'
 import Attendance from './pages/Attendance/Attendance'
 import Exams from './pages/Exams/Exams'
