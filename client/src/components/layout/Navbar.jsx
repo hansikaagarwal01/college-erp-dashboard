@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { FiBell } from 'react-icons/fi'
+import { FaBars, FaBell, FaSearch, FaMoon, FaSun } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/useTheme'
 import useRealtimeNotifications from '../../hooks/useRealtimeNotifications'
 import { getUnreadCount } from '../../api'
 
-function Navbar() {
+function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth()
+  const { darkMode, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   useRealtimeNotifications()
@@ -24,29 +26,78 @@ function Navbar() {
   }
 
   return (
-    <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-      <h2 className="text-lg font-semibold text-gray-800">Dashboard</h2>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md dark:border-gray-700 dark:bg-gray-900/80 sm:px-6">
+      {/* Mobile menu */}
+      <button
+        onClick={onMenuClick}
+        className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 lg:hidden"
+        aria-label="Open sidebar"
+      >
+        <FaBars className="text-lg" />
+      </button>
 
-      <div className="flex items-center gap-4">
+      {/* Search */}
+      <div className="relative ml-2 hidden w-full max-w-md sm:block">
+        <FaSearch className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search students, courses, faculty…"
+          className="search-input"
+        />
+      </div>
+
+      {/* Right side */}
+      <div className="flex items-center gap-1.5 sm:gap-3">
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggleTheme}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          aria-label="Toggle theme"
+        >
+          {darkMode ? <FaSun /> : <FaMoon />}
+        </button>
+
+        {/* Notifications with live unread badge */}
         <button
           onClick={() => navigate('/notifications')}
-          className="relative text-gray-600 hover:text-gray-900"
+          className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label="Notifications"
         >
-          <FiBell size={20} />
+          <FaBell />
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
+          {unreadCount === 0 && (
+            <span className="absolute right-2 top-2 flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-60"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+            </span>
+          )}
         </button>
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-800">{user?.name || 'User'}</p>
-          <p className="text-xs text-gray-500">{user?.role || ''}</p>
+
+        <span className="hidden h-6 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
+
+        {/* Profile */}
+        <div className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg py-1 pl-1 pr-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-sm font-semibold text-white">
+            {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+          </span>
+          <div className="hidden leading-tight sm:block">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {user?.name || 'Admin'}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {user?.role || 'Administrator'}
+            </p>
+          </div>
         </div>
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          className="text-sm text-red-600 hover:text-red-700 font-medium"
+          className="text-sm text-red-600 hover:text-red-700 font-medium hidden sm:block"
         >
           Logout
         </button>

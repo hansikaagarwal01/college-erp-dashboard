@@ -1,70 +1,155 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import toast from 'react-hot-toast'
-import { getTimetable, deleteTimetable } from '../../api'
-
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+import { useState } from "react";
+import { FaPlus, FaCalendarAlt } from "react-icons/fa";
+import timetable from "../../data/timetableData";
+import courses from "../../data/courseData";
+import TimetableFilters from "../../components/timetable/TimetableFilters";
+import TimetableGrid from "../../components/timetable/TimetableGrid";
+import TimetableCards from "../../components/timetable/TimetableCards";
+import TimetableModal from "../../components/timetable/TimetableModal";
+import EmptyState from "../../components/ui/EmptyState";
 
 function Timetable() {
-  const queryClient = useQueryClient()
+  const [entries, setEntries] = useState(timetable);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['timetable'],
-    queryFn: () => getTimetable({ limit: 50 }).then((r) => r.data),
-  })
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [semesterFilter, setSemesterFilter] = useState("");
+  const [sectionFilter, setSectionFilter] = useState("");
+  const [facultyFilter, setFacultyFilter] = useState("");
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => deleteTimetable(id),
-    onSuccess: () => {
-      toast.success('Slot deleted')
-      queryClient.invalidateQueries({ queryKey: ['timetable'] })
-    },
-    onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete slot'),
-  })
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("view");
+  const [activeEntry, setActiveEntry] = useState(null);
 
-  const slots = data?.data || []
-  const byDay = DAYS.map((day) => ({ day, entries: slots.filter((s) => s.day === day) }))
+  const filteredEntries = entries.filter((entry) => {
+    const matchesDepartment =
+      departmentFilter === "" || entry.department === departmentFilter;
+
+    const matchesSemester =
+      semesterFilter === "" || entry.semester === Number(semesterFilter);
+
+    const matchesSection =
+      sectionFilter === "" || entry.section === sectionFilter;
+
+    const matchesFaculty =
+      facultyFilter === "" || entry.faculty === facultyFilter;
+
+    return (
+      matchesDepartment && matchesSemester && matchesSection && matchesFaculty
+    );
+  });
+
+  const openView = (entry) => {
+    setActiveEntry(entry);
+    setModalMode("view");
+    setModalOpen(true);
+  };
+
+  const openAdd = () => {
+    setActiveEntry(null);
+    setModalMode("form");
+    setModalOpen(true);
+  };
+
+  const openEdit = () => {
+    setModalMode("form");
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setActiveEntry(null);
+  };
+
+  const handleSave = (data) => {
+    if (data.id) {
+      setEntries((prev) =>
+        prev.map((entry) => (entry.id === data.id ? data : entry))
+      );
+    } else {
+      const nextId =
+        entries.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
+
+      setEntries((prev) => [...prev, { ...data, id: nextId }]);
+    }
+
+    closeModal();
+  };
+
+  const handleDelete = (entry) => {
+    const confirmed = window.confirm(
+      `Delete the ${entry.courseName} class on ${entry.day} at ${entry.startTime}?`
+    );
+
+    if (confirmed) {
+      setEntries((prev) =>
+        prev.filter((item) => item.id !== entry.id)
+      );
+      closeModal();
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Timetable</h1>
+    <div className="page">
+      {/* Header */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Timetable</h1>
+          <p className="page-subtitle">
+            Weekly schedule for all classes and sections.
+          </p>
 
-      {isLoading && <p className="text-gray-500">Loading timetable...</p>}
-      {error && <p className="text-red-500">Failed to load: {error.message}</p>}
-
-      {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {byDay.map(({ day, entries }) => (
-            <div key={day} className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="font-semibold text-gray-700 mb-3">{day}</h2>
-              {entries.length === 0 && (
-                <p className="text-gray-400 text-sm">No classes</p>
-              )}
-              <ul className="space-y-2">
-                {entries.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between text-sm border-b border-gray-100 pb-2">
-                    <div>
-                      <p className="font-medium">
-                        {s.course?.name || s.course?.code || s.course || '—'}
-                      </p>
-                      <p className="text-gray-500 text-xs">
-                        {s.period} · {s.room} · {s.faculty?.name || s.faculty || '—'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => deleteMutation.mutate(s.id)}
-                      className="text-red-600 hover:text-red-700 text-xs ml-3"
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <span className="badge-neutral mt-3">
+            <FaCalendarAlt />
+            Academic Year 2025-26
+          </span>
         </div>
+
+        <button onClick={openAdd} className="btn-primary">
+          <FaPlus />
+          Add Class
+        </button>
+      </div>
+
+      <TimetableFilters
+        entries={entries}
+        departmentFilter={departmentFilter}
+        setDepartmentFilter={setDepartmentFilter}
+        semesterFilter={semesterFilter}
+        setSemesterFilter={setSemesterFilter}
+        sectionFilter={sectionFilter}
+        setSectionFilter={setSectionFilter}
+        facultyFilter={facultyFilter}
+        setFacultyFilter={setFacultyFilter}
+      />
+
+      {filteredEntries.length === 0 ? (
+        <div className="table-card">
+          <EmptyState
+            message="No classes match your filters"
+            hint="Try adjusting your search or filters."
+          />
+        </div>
+      ) : (
+        <>
+          <TimetableGrid entries={filteredEntries} onView={openView} />
+
+          <TimetableCards entries={filteredEntries} onView={openView} />
+        </>
+      )}
+
+      {modalOpen && (
+        <TimetableModal
+          key={`${modalMode}-${activeEntry?.id || "new"}`}
+          mode={modalMode}
+          entry={activeEntry}
+          courses={courses}
+          onClose={closeModal}
+          onSave={handleSave}
+          onRequestEdit={openEdit}
+          onDelete={() => handleDelete(activeEntry)}
+        />
       )}
     </div>
-  )
+  );
 }
 
-export default Timetable
+export default Timetable;

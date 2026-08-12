@@ -1,59 +1,176 @@
+import { useState } from 'react'
+import {
+  FaTachometerAlt,
+  FaUserGraduate,
+  FaChalkboardTeacher,
+  FaBuilding,
+  FaBook,
+  FaCalendarAlt,
+  FaUniversity,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaClipboardCheck,
+  FaFlask,
+  FaFileAlt,
+  FaClock,
+  FaBookOpen,
+  FaBalanceScale,
+  FaFolder,
+  FaCreditCard,
+  FaBell,
+  FaChartBar,
+  FaTools,
+  FaBullhorn,
+  FaGraduationCap,
+} from 'react-icons/fa'
 import { NavLink } from 'react-router-dom'
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: '📊', ready: true },
-  { to: '/admissions', label: 'Admissions', icon: '🎓', ready: true },
-  { to: '/students', label: 'Students', icon: '🎒', ready: false },
-  { to: '/faculty', label: 'Faculty', icon: '👩‍🏫', ready: false },
-  { to: '/departments', label: 'Departments', icon: '🏛️', ready: false },
-  { to: '/courses', label: 'Courses', icon: '📚', ready: false },
-  { to: '/attendance', label: 'Attendance', icon: '✅', ready: true },
-  { to: '/exams', label: 'Exams', icon: '🧪', ready: true },
-  { to: '/results', label: 'Results', icon: '📝', ready: true },
-  { to: '/timetable', label: 'Timetable', icon: '🕐', ready: true },
-  { to: '/curriculum', label: 'Curriculum', icon: '📖', ready: true },
-  { to: '/workload', label: 'Workload', icon: '⚖️', ready: true },
-  { to: '/files', label: 'Files', icon: '📁', ready: true },
-  { to: '/fees', label: 'Fees', icon: '💳', ready: true },
-  { to: '/notifications', label: 'Notifications', icon: '🔔', ready: true },
-  { to: '/analytics', label: 'Analytics', icon: '📈', ready: true },
-  { to: '/jobs', label: 'Jobs', icon: '🛠️', ready: true },
-  { to: '/announcements', label: 'Announcements', icon: '📢', ready: false },
+const menuItems = [
+  { name: 'Dashboard', path: '/dashboard', icon: <FaTachometerAlt /> },
+  { name: 'Admissions', path: '/admissions', icon: <FaGraduationCap /> },
+  { name: 'Students', path: '/students', icon: <FaUserGraduate /> },
+  { name: 'Faculty', path: '/faculty', icon: <FaChalkboardTeacher /> },
+  { name: 'Departments', path: '/departments', icon: <FaBuilding /> },
+  { name: 'Courses', path: '/courses', icon: <FaBook /> },
+  { name: 'Attendance', path: '/attendance', icon: <FaClipboardCheck /> },
+  { name: 'Exams', path: '/exams', icon: <FaFlask /> },
+  { name: 'Results', path: '/results', icon: <FaFileAlt /> },
+  { name: 'Timetable', path: '/timetable', icon: <FaCalendarAlt /> },
+  { name: 'Curriculum', path: '/curriculum', icon: <FaBookOpen /> },
+  { name: 'Workload', path: '/workload', icon: <FaBalanceScale /> },
+  { name: 'Files', path: '/files', icon: <FaFolder /> },
+  { name: 'Fees', path: '/fees', icon: <FaCreditCard /> },
+  { name: 'Notifications', path: '/notifications', icon: <FaBell /> },
+  { name: 'Analytics', path: '/analytics', icon: <FaChartBar /> },
+  { name: 'Jobs', path: '/jobs', icon: <FaTools /> },
 ]
 
-function Sidebar() {
+const iconButtonClass =
+  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors duration-200 hover:bg-gray-800 hover:text-white'
+
+function Sidebar({ open, onClose }) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const persistCollapsed = (value) => {
+    setCollapsed(value)
+    try {
+      localStorage.setItem('sidebar-collapsed', value ? 'true' : 'false')
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  const compact = collapsed && !open
+
   return (
-    <aside className="w-60 bg-gray-900 text-white flex flex-col">
-      <div className="p-5 border-b border-gray-800">
-        <h1 className="text-lg font-bold">College ERP</h1>
+    <aside
+      className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-gray-900 shadow-xl transition-all duration-300 lg:static lg:translate-x-0 ${
+        compact ? 'w-20' : 'w-72'
+      } ${open ? 'translate-x-0' : '-translate-x-full'}`}
+    >
+      {/* Brand */}
+      <div
+        className={`flex items-center border-b border-gray-800 py-5 ${
+          compact ? 'justify-center px-2' : 'justify-between px-5'
+        }`}
+      >
+        <div
+          className={`flex items-center gap-3 ${
+            compact ? 'flex-col' : ''
+          }`}
+        >
+          <div className="rounded-xl bg-primary-600 p-2.5 shadow-card">
+            <FaUniversity className="text-xl text-white" />
+          </div>
+
+          {!compact && (
+            <div className="leading-tight">
+              <h1 className="text-lg font-bold text-white">College ERP</h1>
+              <p className="text-xs text-gray-400">Admin Dashboard</p>
+            </div>
+          )}
+        </div>
+
+        {!compact && (
+          <button
+            onClick={onClose}
+            className={`${iconButtonClass} lg:hidden`}
+            aria-label="Close sidebar"
+          >
+            <FaTimes />
+          </button>
+        )}
       </div>
 
-      <nav className="flex-1 py-4">
-        {NAV_ITEMS.map((item) => (
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {menuItems.map((item) => (
           <NavLink
-            key={item.to}
-            to={item.to}
+            key={item.path}
+            to={item.path}
+            onClick={onClose}
+            title={compact ? item.name : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
-                item.ready
-                  ? isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  : 'text-gray-600 cursor-not-allowed'
+              `group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${
+                compact ? 'justify-center py-3' : 'gap-3 px-3.5 py-2.5'
+              } ${
+                isActive
+                  ? 'bg-primary-600 text-white shadow-card'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`
             }
-            onClick={(e) => {
-              if (!item.ready) e.preventDefault()
-            }}
           >
-            <span aria-hidden="true">{item.icon}</span>
-            <span>{item.label}</span>
-            {!item.ready && (
-              <span className="ml-auto text-[10px] text-gray-500">soon</span>
+            {({ isActive }) => (
+              <>
+                {/* Active route indicator */}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white transition-opacity duration-200 ${
+                    isActive ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+
+                <span className="text-lg">{item.icon}</span>
+
+                {!compact && <span className="flex-1">{item.name}</span>}
+              </>
             )}
           </NavLink>
         ))}
       </nav>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between border-t border-gray-800 px-3 py-3">
+        {!compact ? (
+          <>
+            <p className="px-2 text-xs text-gray-500">© 2026 College ERP</p>
+            <button
+              onClick={() => persistCollapsed(true)}
+              className={`${iconButtonClass} hidden lg:flex`}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <FaChevronLeft />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => persistCollapsed(false)}
+            className={`${iconButtonClass} w-full`}
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <FaChevronRight />
+          </button>
+        )}
+      </div>
     </aside>
   )
 }

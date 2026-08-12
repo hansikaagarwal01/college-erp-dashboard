@@ -1,0 +1,148 @@
+const courses = [
+  {
+    id: 1,
+    courseName: "Data Structures & Algorithms",
+    courseCode: "CS101",
+    department: "Computer Science",
+    credits: 4,
+    instructor: "Dr. Anil Sharma",
+    semester: 1,
+    status: "Active",
+    description:
+      "Introduction to fundamental data structures and algorithms, including arrays, linked lists, stacks, queues, trees, and sorting techniques.",
+  },
+  {
+    id: 2,
+    courseName: "Operating Systems",
+    courseCode: "CS201",
+    department: "Computer Science",
+    credits: 3,
+    instructor: "Dr. Anil Sharma",
+    semester: 3,
+    status: "Active",
+    description:
+      "Principles of operating systems: processes, threads, scheduling, memory management, file systems, and concurrency.",
+  },
+  {
+    id: 3,
+    courseName: "Database Management Systems",
+    courseCode: "CS301",
+    department: "Computer Science",
+    credits: 4,
+    instructor: "Rohit Verma",
+    semester: 5,
+    status: "Active",
+    description:
+      "Design and implementation of relational databases, SQL, normalization, transactions, and database security.",
+  },
+  {
+    id: 4,
+    courseName: "Discrete Mathematics",
+    courseCode: "CS103",
+    department: "Computer Science",
+    credits: 3,
+    instructor: "Rohit Verma",
+    semester: 1,
+    status: "Active",
+    description:
+      "Foundational topics in discrete mathematics including logic, set theory, relations, functions, and graph theory.",
+  },
+  {
+    id: 5,
+    courseName: "Computer Networks",
+    courseCode: "CS401",
+    department: "Computer Science",
+    credits: 3,
+    instructor: "Dr. Priya Mehta",
+    semester: 7,
+    status: "Inactive",
+    description:
+      "Introduction to computer networking: OSI and TCP/IP models, routing, transport protocols, and network security basics.",
+  },
+  {
+    id: 6,
+    courseName: "Principles of Management",
+    courseCode: "MG101",
+    department: "Management",
+    credits: 3,
+    instructor: "Dr. Priya Mehta",
+    semester: 1,
+    status: "Active",
+    description:
+      "Fundamentals of planning, organizing, leading, and controlling within modern organizations.",
+  },
+  {
+    id: 7,
+    courseName: "Financial Accounting",
+    courseCode: "MG201",
+    department: "Management",
+    credits: 4,
+    instructor: "Dr. Priya Mehta",
+    semester: 3,
+    status: "Active",
+    description:
+      "Principles of financial accounting, journal entries, ledgers, trial balance, and preparation of financial statements.",
+  },
+  {
+    id: 8,
+    courseName: "Marketing Management",
+    courseCode: "MG301",
+    department: "Management",
+    credits: 3,
+    instructor: "Rohit Verma",
+    semester: 5,
+    status: "Active",
+    description:
+      "Concepts and tools of marketing, market segmentation, branding, pricing, and distribution strategy.",
+  },
+  {
+    id: 9,
+    courseName: "Organizational Behaviour",
+    courseCode: "MG105",
+    department: "Management",
+    credits: 3,
+    instructor: "Dr. Anil Sharma",
+    semester: 2,
+    status: "Active",
+    description:
+      "Individual and group behaviour in organizations, motivation, leadership, and organizational culture.",
+  },
+  {
+    id: 10,
+    courseName: "Digital Electronics",
+    courseCode: "EC101",
+    department: "Electronics",
+    credits: 4,
+    instructor: "Rohit Verma",
+    semester: 1,
+    status: "Active",
+    description:
+      "Boolean algebra, logic gates, combinational and sequential circuits, and digital system design.",
+  },
+  {
+    id: 11,
+    courseName: "Signals & Systems",
+    courseCode: "EC201",
+    department: "Electronics",
+    credits: 3,
+    instructor: "Dr. Priya Mehta",
+    semester: 3,
+    status: "Active",
+    description:
+      "Continuous and discrete-time signals, linear time-invariant systems, Fourier and Laplace transforms.",
+  },
+  {
+    id: 12,
+    courseName: "Embedded Systems",
+    courseCode: "EC301",
+    department: "Electronics",
+    credits: 4,
+    instructor: "Dr. Anil Sharma",
+    semester: 5,
+    status: "Inactive",
+    description:
+      "Design of microcontroller-based embedded systems, firmware development, and real-time constraints.",
+  },
+];
+
+export default courses;
