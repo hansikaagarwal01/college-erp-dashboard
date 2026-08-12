@@ -1,3 +1,7 @@
+const path = require("path");
+const dotenv = require("dotenv");
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 const mongoose = require("mongoose");
 const app = require("./app");
 const connectDB = require("./config/database");

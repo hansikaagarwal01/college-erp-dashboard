@@ -1,15 +1,27 @@
-import { useState } from "react";
-import { FaPlus, FaCalendarAlt } from "react-icons/fa";
-import timetable from "../../data/timetableData";
-import courses from "../../data/courseData";
+import { useEffect, useState } from "react";
+import { FaPlus, FaCalendarAlt, FaRedo } from "react-icons/fa";
 import TimetableFilters from "../../components/timetable/TimetableFilters";
 import TimetableGrid from "../../components/timetable/TimetableGrid";
 import TimetableCards from "../../components/timetable/TimetableCards";
 import TimetableModal from "../../components/timetable/TimetableModal";
 import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
+import { usePermissions } from "../../hooks/usePermissions";
+
+function normalizeEntry(entry) {
+  return {
+    ...entry,
+    _id: entry._id || entry.id,
+    id: entry._id || entry.id,
+  };
+}
 
 function Timetable() {
-  const [entries, setEntries] = useState(timetable);
+  const { isAdmin } = usePermissions();
+  const [entries, setEntries] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("");
@@ -19,6 +31,13 @@ function Timetable() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("view");
   const [activeEntry, setActiveEntry] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const retryLoad = () => {
+    setLoading(true);
+    setError("");
+    setReloadKey((k) => k + 1);
+  };
 
   const filteredEntries = entries.filter((entry) => {
     const matchesDepartment =
@@ -59,33 +78,76 @@ function Timetable() {
     setActiveEntry(null);
   };
 
-  const handleSave = (data) => {
-    if (data.id) {
-      setEntries((prev) =>
-        prev.map((entry) => (entry.id === data.id ? data : entry))
-      );
-    } else {
-      const nextId =
-        entries.reduce((max, entry) => Math.max(max, entry.id), 0) + 1;
-
-      setEntries((prev) => [...prev, { ...data, id: nextId }]);
+  const handleSave = async (data) => {
+    try {
+      const payload = { ...data };
+      delete payload._id;
+      if (data._id) {
+        const res = await api.put(`/timetable/${data._id}`, payload);
+        const updated = normalizeEntry(res.data?.data || payload);
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry._id === updated._id ? updated : entry
+          )
+        );
+      } else {
+        const res = await api.post("/timetable", payload);
+        const created = normalizeEntry(res.data?.data || payload);
+        setEntries((prev) => [...prev, created]);
+      }
+      closeModal();
+    } catch (err) {
+      window.alert(getErrorMessage(err, "Failed to save timetable entry."));
     }
-
-    closeModal();
   };
 
-  const handleDelete = (entry) => {
+  const handleDelete = async (entry) => {
     const confirmed = window.confirm(
       `Delete the ${entry.courseName} class on ${entry.day} at ${entry.startTime}?`
     );
+    if (!confirmed) return;
 
-    if (confirmed) {
-      setEntries((prev) =>
-        prev.filter((item) => item.id !== entry.id)
-      );
+    try {
+      await api.delete(`/timetable/${entry._id}`);
+      setEntries((prev) => prev.filter((item) => item._id !== entry._id));
       closeModal();
+    } catch (err) {
+      window.alert(getErrorMessage(err, "Failed to delete timetable entry."));
     }
   };
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get("/timetable")
+      .then((res) => {
+        if (active) setEntries((res.data?.data || []).map(normalizeEntry));
+      })
+      .catch((err) => {
+        if (active) {
+          setError(getErrorMessage(err, "Unable to load timetable. Please try again."));
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    api
+      .get("/courses")
+      .then((res) => {
+        if (active) {
+          setCourses((res.data?.data || []).map(normalizeEntry));
+        }
+      })
+      .catch(() => {
+        /* courses are optional for the timetable grid */
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
 
   return (
     <div className="page">
@@ -103,36 +165,70 @@ function Timetable() {
           </span>
         </div>
 
-        <button onClick={openAdd} className="btn-primary">
-          <FaPlus />
-          Add Class
-        </button>
+        {isAdmin && (
+          <button onClick={openAdd} className="btn-primary">
+            <FaPlus />
+            Add Class
+          </button>
+        )}
       </div>
 
-      <TimetableFilters
-        entries={entries}
-        departmentFilter={departmentFilter}
-        setDepartmentFilter={setDepartmentFilter}
-        semesterFilter={semesterFilter}
-        setSemesterFilter={setSemesterFilter}
-        sectionFilter={sectionFilter}
-        setSectionFilter={setSectionFilter}
-        facultyFilter={facultyFilter}
-        setFacultyFilter={setFacultyFilter}
-      />
-
-      {filteredEntries.length === 0 ? (
-        <div className="table-card">
-          <EmptyState
-            message="No classes match your filters"
-            hint="Try adjusting your search or filters."
-          />
+      {/* Loading state */}
+      {loading ? (
+        <div className="card">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+            <span className="spinner" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading timetable…
+            </p>
+          </div>
+        </div>
+      ) : error && entries.length === 0 ? (
+        <div className="card">
+          <EmptyState message="Could not load timetable" hint={error} />
+          <div className="flex justify-center pb-6">
+            <button onClick={retryLoad} className="btn-secondary">
+              <FaRedo />
+              Retry
+            </button>
+          </div>
         </div>
       ) : (
         <>
-          <TimetableGrid entries={filteredEntries} onView={openView} />
+          <TimetableFilters
+            entries={entries}
+            departmentFilter={departmentFilter}
+            setDepartmentFilter={setDepartmentFilter}
+            semesterFilter={semesterFilter}
+            setSemesterFilter={setSemesterFilter}
+            sectionFilter={sectionFilter}
+            setSectionFilter={setSectionFilter}
+            facultyFilter={facultyFilter}
+            setFacultyFilter={setFacultyFilter}
+          />
 
-          <TimetableCards entries={filteredEntries} onView={openView} />
+          {filteredEntries.length === 0 ? (
+            <div className="table-card">
+              <EmptyState
+                message={
+                  entries.length === 0
+                    ? "No classes scheduled yet"
+                    : "No classes match your filters"
+                }
+                hint={
+                  entries.length === 0
+                    ? "Add your first class to get started."
+                    : "Try adjusting your search or filters."
+                }
+              />
+            </div>
+          ) : (
+            <>
+              <TimetableGrid entries={filteredEntries} onView={openView} />
+
+              <TimetableCards entries={filteredEntries} onView={openView} />
+            </>
+          )}
         </>
       )}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -23,7 +23,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import students from "../../data/studentData";
 import { useTheme } from "../../context/useTheme";
 import EmptyState from "../ui/EmptyState";
 import { PALETTE, chartColors } from "./charts/chartTheme";
@@ -170,99 +169,11 @@ function TransitionSpinner() {
   );
 }
 
-function StudentAnalytics() {
+function ProgramLevel({ programs, programData, total, onOpenProgram }) {
   const { darkMode } = useTheme();
   const dark = darkMode;
 
-  const [program, setProgram] = useState(null);
-  const [branch, setBranch] = useState(null);
-  const [transitioning, setTransitioning] = useState(false);
-  const [pendingChange, setPendingChange] = useState(null);
-
-  useEffect(() => {
-    if (!pendingChange) return;
-    const timer = setTimeout(() => {
-      pendingChange();
-      setTransitioning(false);
-      setPendingChange(null);
-    }, 320);
-    return () => clearTimeout(timer);
-  }, [pendingChange]);
-
-  const total = students.length;
-
-  const programs = useMemo(() => {
-    const preferred = ["B.Tech", "BBA", "B.Des"];
-    const present = Array.from(new Set(students.map((s) => s.course))).filter(Boolean);
-    const ordered = preferred.filter((p) => present.includes(p));
-    present.forEach((p) => {
-      if (!ordered.includes(p)) ordered.push(p);
-    });
-    return ordered;
-  }, []);
-
-  const branches = useMemo(() => {
-    if (!program) return [];
-    return Array.from(
-      new Set(
-        students
-          .filter((s) => s.course === program)
-          .map((s) => s.branch)
-          .filter(Boolean)
-      )
-    );
-  }, [program]);
-
-  const hasBranchLevel = branches.length > 1;
-
-  const programData = programs.map((p, i) => ({
-    name: p,
-    value: students.filter((s) => s.course === p).length,
-    color: PALETTE[i % PALETTE.length],
-  }));
-
-  const branchData = branches.map((b, i) => ({
-    name: b,
-    value: students.filter((s) => s.course === program && s.branch === b).length,
-    color: PALETTE[i % PALETTE.length],
-  }));
-
-  const currentFilter = useMemo(() => {
-    return students.filter(
-      (s) =>
-        (!program || s.course === program) &&
-        (!branch || s.branch === branch)
-    );
-  }, [program, branch]);
-
-  const yearData = yearBreakdown(currentFilter);
-
-  const drill = (next) => {
-    setTransitioning(true);
-    setPendingChange(() => next);
-  };
-
-  const openProgram = (p) =>
-    drill(() => {
-      setBranch(null);
-      setProgram(p);
-    });
-
-  const openBranch = (b) => drill(() => setBranch(b));
-
-  const goBack = () =>
-    drill(() => {
-      if (branch) setBranch(null);
-      else setProgram(null);
-    });
-
-  const resetAll = () =>
-    drill(() => {
-      setBranch(null);
-      setProgram(null);
-    });
-
-  const renderProgramLevel = () => (
+  return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="flex flex-col gap-3 lg:col-span-3">
         {programs.length === 0 ? (
@@ -271,14 +182,14 @@ function StudentAnalytics() {
             hint="Add student records to see distribution analytics."
           />
         ) : (
-          programs.map((p) => {
-            const count = students.filter((s) => s.course === p).length;
+          programs.map((p, i) => {
+            const count = programData[i]?.value ?? 0;
             const pct = total ? Math.round((count / total) * 100) : 0;
-            const color = PALETTE[programs.indexOf(p) % PALETTE.length];
+            const color = PALETTE[i % PALETTE.length];
             return (
               <button
                 key={p}
-                onClick={() => openProgram(p)}
+                onClick={() => onOpenProgram(p)}
                 title={`${count} students · drill into ${p}`}
                 className="card card-hover group flex w-full items-center gap-4 p-4 text-left"
               >
@@ -323,8 +234,13 @@ function StudentAnalytics() {
       </div>
     </div>
   );
+}
 
-  const renderBranchLevel = () => (
+function BranchLevel({ program, branchData, totalInProgram, onOpenBranch }) {
+  const { darkMode } = useTheme();
+  const dark = darkMode;
+
+  return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="flex flex-col gap-3 lg:col-span-3">
         {branchData.length === 0 ? (
@@ -334,12 +250,11 @@ function StudentAnalytics() {
           />
         ) : (
           branchData.map((entry) => {
-            const totalInProgram = students.filter((s) => s.course === program).length;
             const pct = totalInProgram ? Math.round((entry.value / totalInProgram) * 100) : 0;
             return (
               <button
                 key={entry.name}
-                onClick={() => openBranch(entry.name)}
+                onClick={() => onOpenBranch(entry.name)}
                 title={`${entry.value} students · drill into ${entry.name}`}
                 className="card card-hover group flex w-full items-center gap-4 p-4 text-left"
               >
@@ -384,60 +299,154 @@ function StudentAnalytics() {
       </div>
     </div>
   );
+}
 
-  const renderYearLevel = () => {
-    if (currentFilter.length === 0) {
-      return (
-        <EmptyState
-          message="No students found"
-          hint="There are no student records matching this selection."
-        />
-      );
-    }
+function YearLevel({ currentFilter, yearData }) {
+  const { darkMode } = useTheme();
+  const dark = darkMode;
+
+  if (currentFilter.length === 0) {
     return (
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="flex flex-col gap-3 lg:col-span-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {yearData.map((entry, index) => (
-              <div
-                key={entry.label}
-                className="card card-hover flex items-center gap-4 p-4"
-                title={`${entry.students} students in ${entry.name}`}
-              >
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
-                  style={{ backgroundColor: PALETTE[index % PALETTE.length] }}
-                >
-                  {index + 1}
-                </div>
-                <div>
-                  <p className="stat-label">{entry.name}</p>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums dark:text-white">
-                    {entry.students}
-                    <span className="ml-1 text-xs font-medium text-gray-400">
-                      students
-                    </span>
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Tip: academic year is derived from each student's current semester.
-          </p>
-        </div>
-
-        <div className="lg:col-span-2">
-          <YearBar
-            data={yearData}
-            title="Student Distribution by Academic Year"
-            dark={dark}
-          />
-        </div>
-      </div>
+      <EmptyState
+        message="No students found"
+        hint="There are no student records matching this selection."
+      />
     );
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-5">
+      <div className="flex flex-col gap-3 lg:col-span-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {yearData.map((entry, index) => (
+            <div
+              key={entry.label}
+              className="card card-hover flex items-center gap-4 p-4"
+              title={`${entry.students} students in ${entry.name}`}
+            >
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: PALETTE[index % PALETTE.length] }}
+              >
+                {index + 1}
+              </div>
+              <div>
+                <p className="stat-label">{entry.name}</p>
+                <p className="text-2xl font-bold text-gray-900 tabular-nums dark:text-white">
+                  {entry.students}
+                  <span className="ml-1 text-xs font-medium text-gray-400">
+                    students
+                  </span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Tip: academic year is derived from each student's current semester.
+        </p>
+      </div>
+
+      <div className="lg:col-span-2">
+        <YearBar
+          data={yearData}
+          title="Student Distribution by Academic Year"
+          dark={dark}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StudentAnalytics({ students = [] }) {
+  const timerRef = useRef(null);
+
+  const [program, setProgram] = useState(null);
+  const [branch, setBranch] = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const total = students.length;
+
+  const programs = useMemo(() => {
+    const preferred = ["B.Tech", "BBA", "B.Des"];
+    const present = Array.from(new Set(students.map((s) => s.course))).filter(Boolean);
+    const ordered = preferred.filter((p) => present.includes(p));
+    present.forEach((p) => {
+      if (!ordered.includes(p)) ordered.push(p);
+    });
+    return ordered;
+  }, [students]);
+
+  const branches = useMemo(() => {
+    if (!program) return [];
+    return Array.from(
+      new Set(
+        students
+          .filter((s) => s.course === program)
+          .map((s) => s.branch)
+          .filter(Boolean)
+      )
+    );
+  }, [program, students]);
+
+  const hasBranchLevel = branches.length > 0;
+
+  const programData = programs.map((p, i) => ({
+    name: p,
+    value: students.filter((s) => s.course === p).length,
+    color: PALETTE[i % PALETTE.length],
+  }));
+
+  const branchData = branches.map((b, i) => ({
+    name: b,
+    value: students.filter((s) => s.course === program && s.branch === b).length,
+    color: PALETTE[i % PALETTE.length],
+  }));
+
+  const totalInProgram = program
+    ? students.filter((s) => s.course === program).length
+    : 0;
+
+  const currentFilter = useMemo(() => {
+    return students.filter(
+      (s) =>
+        (!program || s.course === program) &&
+        (!branch || s.branch === branch)
+    );
+  }, [program, branch, students]);
+
+  const yearData = yearBreakdown(currentFilter);
+
+  const drill = (next) => {
+    setTransitioning(true);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      next();
+      setTransitioning(false);
+    }, 320);
   };
+
+  const openProgram = (p) =>
+    drill(() => {
+      setBranch(null);
+      setProgram(p);
+    });
+
+  const openBranch = (b) => drill(() => setBranch(b));
+
+  const goBack = () =>
+    drill(() => {
+      if (branch) setBranch(null);
+      else setProgram(null);
+    });
+
+  const resetAll = () =>
+    drill(() => {
+      setBranch(null);
+      setProgram(null);
+    });
 
   const crumbRoot = (
     <button
@@ -488,7 +497,7 @@ function StudentAnalytics() {
             <FaChartPie className="text-xl" />
           </div>
           <div>
-            <h2 className="section-title">Student Analytics</h2>
+            <h2 className="section-title">Student Distribution</h2>
             <p className="section-subtitle">
               Explore how students are distributed across programs, branches and years.
             </p>
@@ -527,10 +536,28 @@ function StudentAnalytics() {
           <TransitionSpinner />
         ) : (
           <div key={viewKey} className="animate-slide-up">
-            {!program && renderProgramLevel()}
-            {program && !branch && hasBranchLevel && renderBranchLevel()}
-            {program && !branch && !hasBranchLevel && renderYearLevel()}
-            {program && branch && renderYearLevel()}
+            {!program && (
+              <ProgramLevel
+                programs={programs}
+                programData={programData}
+                total={total}
+                onOpenProgram={openProgram}
+              />
+            )}
+            {program && !branch && hasBranchLevel && (
+              <BranchLevel
+                program={program}
+                branchData={branchData}
+                totalInProgram={totalInProgram}
+                onOpenBranch={openBranch}
+              />
+            )}
+            {program && !branch && !hasBranchLevel && (
+              <YearLevel currentFilter={currentFilter} yearData={yearData} />
+            )}
+            {program && branch && (
+              <YearLevel currentFilter={currentFilter} yearData={yearData} />
+            )}
           </div>
         )}
       </div>

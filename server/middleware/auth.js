@@ -4,7 +4,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { verifyAccessToken } = require("../utils/token");
 const { PERMISSIONS } = require("../config/permissions");
 
-// Protect: verify Bearer access token and load the user onto req.user
+// Protect: verify Bearer access token and load the user onto req.user and req.admin
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -35,13 +35,15 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 
   req.user = user;
+  req.admin = user; // backwards compatibility
   next();
 });
 
 // Authorize: restrict to an explicit set of roles
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    const userRole = req.user?.role || req.admin?.role;
+    if (!userRole || !roles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: "Access denied",
@@ -63,14 +65,15 @@ const requirePermission = (module, action) => {
       });
     }
 
-    if (!req.user) {
+    if (!req.user && !req.admin) {
       return res.status(401).json({
         success: false,
         message: "Not authorized. No token provided.",
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user?.role || req.admin?.role;
+    if (!allowedRoles.includes(userRole)) {
       return res.status(403).json({
         success: false,
         message: "Access denied",

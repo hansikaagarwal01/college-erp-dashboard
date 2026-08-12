@@ -1,27 +1,41 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import courses from "../../data/courseData";
-import EmptyState from "../../components/ui/EmptyState";
 import CourseForm from "../../components/course/CourseForm";
+import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
 
 function EditCourse() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const course = courses.find((item) => item.id === Number(id));
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!course) {
-    return (
-      <div className="page">
-        <div className="table-card">
-          <EmptyState
-            message="Course Not Found"
-            hint="The course you're trying to edit doesn't exist."
-          />
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get(`/courses/${id}`)
+      .then((res) => {
+        if (active) setCourse(res.data?.data || null);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(
+            getErrorMessage(err, "Unable to load course. Please try again.")
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   return (
     <div className="page">
@@ -42,7 +56,29 @@ function EditCourse() {
         </div>
       </div>
 
-      <CourseForm initialData={course} />
+      {loading ? (
+        <div className="card">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+            <span className="spinner" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading course…
+            </p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="card">
+          <EmptyState message="Could not load course" hint={error} />
+        </div>
+      ) : course ? (
+        <CourseForm key={course._id} initialData={course} />
+      ) : (
+        <div className="card">
+          <EmptyState
+            message="Course not found"
+            hint="This record may have been deleted."
+          />
+        </div>
+      )}
     </div>
   );
 }

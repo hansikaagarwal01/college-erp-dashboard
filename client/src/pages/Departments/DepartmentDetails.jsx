@@ -1,28 +1,136 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
-import departments from "../../data/departmentData";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft, FaEdit } from "react-icons/fa";
 import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
+import { usePermissions } from "../../hooks/usePermissions";
+
+function normalizeDepartment(d) {
+  return {
+    ...d,
+    _id: d._id || d.id,
+    id: d._id || d.id,
+    name: d.departmentName || d.name || "",
+    code: d.departmentCode || d.code || "",
+    hod: d.hod || "",
+    faculty: d.totalFaculty ?? d.faculty ?? 0,
+    students: d.totalStudents ?? d.students ?? 0,
+    status: d.status || "Active",
+  };
+}
 
 function DepartmentDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
 
-  const department = departments.find(
-    (dept) => dept.id === Number(id)
-  );
+  const [department, setDepartment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [related, setRelated] = useState({
+    studentCount: null,
+    facultyCount: null,
+    courseCount: null,
+  });
 
-  if (!department) {
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get(`/departments/${id}`)
+      .then((res) => {
+        if (!active) return;
+        const dept = normalizeDepartment(res.data?.data || null);
+        setDepartment(dept);
+        if (!dept) return;
+
+        const deptName = dept.name.toLowerCase();
+
+        Promise.all([
+          api.get("/students", { params: { limit: 10000 } }),
+          api.get("/faculty", { params: { limit: 10000 } }),
+          api.get("/courses", { params: { limit: 10000 } }),
+        ])
+          .then(([studentsRes, facultyRes, coursesRes]) => {
+            if (!active) return;
+            setRelated({
+              studentCount: (studentsRes.data?.data || []).filter(
+                (s) =>
+                  String(s.department || "").toLowerCase() === deptName
+              ).length,
+              facultyCount: (facultyRes.data?.data || []).filter(
+                (f) =>
+                  String(f.department || "").toLowerCase() === deptName
+              ).length,
+              courseCount: (coursesRes.data?.data || []).filter(
+                (c) =>
+                  String(c.department || "").toLowerCase() === deptName
+              ).length,
+            });
+          })
+          .catch(() => {
+            /* related counts are best-effort; keep null so UI hides them */
+          });
+      })
+      .catch((err) => {
+        if (active) {
+          setError(
+            getErrorMessage(err, "Unable to load department. Please try again.")
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
     return (
       <div className="page">
-        <div className="table-card">
+        <button
+          onClick={() => navigate("/departments")}
+          className="btn-secondary mb-6 w-fit"
+        >
+          <FaArrowLeft />
+          Back to Departments
+        </button>
+        <div className="card">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+            <span className="spinner" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading department details…
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !department) {
+    return (
+      <div className="page">
+        <button
+          onClick={() => navigate("/departments")}
+          className="btn-secondary mb-6 w-fit"
+        >
+          <FaArrowLeft />
+          Back to Departments
+        </button>
+        <div className="card">
           <EmptyState
             message="Department Not Found"
-            hint="The department you're looking for doesn't exist."
+            hint={error || "The department you're looking for doesn't exist."}
           />
         </div>
       </div>
     );
   }
+
+  const hasRelated = Object.values(related).some((v) => v !== null);
 
   return (
     <div className="page">
@@ -41,6 +149,16 @@ function DepartmentDetails() {
             Complete profile information for this department.
           </p>
         </div>
+
+        {isAdmin && (
+          <Link
+            to={`/departments/edit/${department.id}`}
+            className="btn-primary"
+          >
+            <FaEdit />
+            Edit Department
+          </Link>
+        )}
       </div>
 
       <div className="card p-6 sm:p-8">
@@ -74,27 +192,8 @@ function DepartmentDetails() {
 
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Faculty Count
-            </h3>
-            <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-              {department.faculty}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Student Count
-            </h3>
-            <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-              {department.students}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Status
             </h3>
-
             <span
               className={
                 department.status === "Active"
@@ -106,17 +205,41 @@ function DepartmentDetails() {
             </span>
           </div>
         </div>
-
-        <div className="mt-8">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-            Description
-          </h3>
-
-          <p className="text-gray-700 dark:text-gray-200">
-            {department.description}
-          </p>
-        </div>
       </div>
+
+      {hasRelated && (
+        <div className="mt-6">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Related Records
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {related.studentCount !== null && (
+              <div className="card p-6">
+                <h3 className="stat-label">Students</h3>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums dark:text-white">
+                  {related.studentCount}
+                </p>
+              </div>
+            )}
+            {related.facultyCount !== null && (
+              <div className="card p-6">
+                <h3 className="stat-label">Faculty</h3>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums dark:text-white">
+                  {related.facultyCount}
+                </p>
+              </div>
+            )}
+            {related.courseCount !== null && (
+              <div className="card p-6">
+                <h3 className="stat-label">Courses</h3>
+                <p className="mt-2 text-3xl font-bold text-gray-900 tabular-nums dark:text-white">
+                  {related.courseCount}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,6 +23,8 @@ import {
   FaGraduationCap,
 } from 'react-icons/fa'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { canAccess } from '../../utils/permissions'
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', icon: <FaTachometerAlt /> },
@@ -48,6 +50,7 @@ const iconButtonClass =
   'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors duration-200 hover:bg-gray-800 hover:text-white'
 
 function Sidebar({ open, onClose }) {
+  const { user } = useAuth()
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem('sidebar-collapsed') === 'true'
@@ -66,6 +69,9 @@ function Sidebar({ open, onClose }) {
   }
 
   const compact = collapsed && !open
+  const visibleItems = menuItems.filter((item) =>
+    typeof canAccess === 'function' ? canAccess(user?.role, item.roles) : true
+  )
 
   return (
     <aside
@@ -79,11 +85,7 @@ function Sidebar({ open, onClose }) {
           compact ? 'justify-center px-2' : 'justify-between px-5'
         }`}
       >
-        <div
-          className={`flex items-center gap-3 ${
-            compact ? 'flex-col' : ''
-          }`}
-        >
+        <div className={`flex items-center gap-3 ${compact ? 'flex-col' : ''}`}>
           <div className="rounded-xl bg-primary-600 p-2.5 shadow-card">
             <FaUniversity className="text-xl text-white" />
           </div>
@@ -109,7 +111,7 @@ function Sidebar({ open, onClose }) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {menuItems.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

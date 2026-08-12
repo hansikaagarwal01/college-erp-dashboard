@@ -1,8 +1,41 @@
-import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPencilAlt } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
+import DepartmentForm from "../../components/department/DepartmentForm";
+import EmptyState from "../../components/ui/EmptyState";
+import api, { getErrorMessage } from "../../services/api";
 
 function EditDepartment() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const [department, setDepartment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get(`/departments/${id}`)
+      .then((res) => {
+        if (active) setDepartment(res.data?.data || null);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(
+            getErrorMessage(err, "Unable to load department record. Please try again.")
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   return (
     <div className="page">
@@ -23,19 +56,25 @@ function EditDepartment() {
         </div>
       </div>
 
-      <div className="card p-6">
-        <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-            <FaPencilAlt className="h-6 w-6" />
+      {loading ? (
+        <div className="card">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-3">
+            <span className="spinner" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading department…
+            </p>
           </div>
-          <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-white">
-            Edit form coming soon
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            The department edit form will be available here.
-          </p>
         </div>
-      </div>
+      ) : error || !department ? (
+        <div className="card">
+          <EmptyState
+            message="Could not load department"
+            hint={error || "Department record not found."}
+          />
+        </div>
+      ) : (
+        <DepartmentForm key={department._id} initialData={department} />
+      )}
     </div>
   );
 }

@@ -4,40 +4,41 @@ import { PALETTE, chartColors } from "./chartTheme";
 import { useTheme } from "../../../context/useTheme";
 import EmptyState from "../../ui/EmptyState";
 
-function DepartmentChart({
+function FacultyDepartmentChart({
   data = [],
-  title = "Department Distribution",
+  title = "Faculty by Department",
 }) {
   const { darkMode } = useTheme();
   const c = chartColors(darkMode);
+  const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
     <div className="card">
       <div className="mb-1 flex items-end justify-between gap-2">
         <div>
           <h2 className="section-title">{title}</h2>
-          <p className="section-subtitle">Students enrolled per department</p>
+          <p className="section-subtitle">Faculty members per department</p>
         </div>
-        <span className="chip bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-400/20">
-          {data.reduce((s, d) => s + d.value, 0)} total
+        <span className="chip bg-violet-50 text-violet-700 ring-violet-600/15 dark:bg-violet-500/10 dark:text-violet-400 dark:ring-violet-400/20">
+          {total} total
         </span>
       </div>
 
       {data.length === 0 ? (
         <EmptyState
-          message="No department data"
-          hint="Department distribution will appear here once data is available."
+          message="No faculty data"
+          hint="Faculty distribution will appear here once data is available."
         />
       ) : (
-        <div className="relative h-64">
+        <div className="relative h-56">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={50}
-                outerRadius={82}
+                innerRadius={44}
+                outerRadius={74}
                 paddingAngle={2}
                 strokeWidth={0}
               >
@@ -50,16 +51,15 @@ function DepartmentChart({
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xl font-bold text-gray-900 tabular-nums dark:text-white">
-              {data.reduce((s, d) => s + d.value, 0)}
+              {total}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">students</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">faculty</span>
           </div>
         </div>
       )}
 
       <ul className="mt-4 space-y-2">
         {data.map((entry, index) => {
-          const total = data.reduce((s, d) => s + d.value, 0);
           const pct = total ? Math.round((entry.value / total) * 100) : 0;
           return (
             <li key={entry.name} className="flex items-center gap-2 text-xs">
@@ -82,4 +82,4 @@ function DepartmentChart({
   );
 }
 
-export default DepartmentChart;
+export default FacultyDepartmentChart;

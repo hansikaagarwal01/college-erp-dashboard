@@ -18,6 +18,55 @@
   --color-primary-800: #3730a3;
   --color-primary-900: #312e81;
 
+  /* Material 3 design tokens (light scheme) */
+  --color-on-primary: #ffffff;
+  --color-tertiary-fixed-dim: #ddc39d;
+  --color-on-primary-container: #8590a6;
+  --color-surface-tint: #545f73;
+  --color-on-surface-variant: #45474c;
+  --color-surface-container-low: #f5f3f4;
+  --color-surface: #fbf8fa;
+  --color-surface-container: #f0edef;
+  --color-on-secondary-fixed-variant: #004395;
+  --color-secondary-fixed: #d8e2ff;
+  --color-tertiary-container: #35260c;
+  --color-on-primary-fixed-variant: #3c475a;
+  --color-on-tertiary-fixed: #271902;
+  --color-primary-fixed: #d8e3fb;
+  --color-on-secondary-container: #fefcff;
+  --color-on-secondary: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-outline-variant: #c5c6cd;
+  --color-on-error: #ffffff;
+  --color-tertiary: #1e1200;
+  --color-on-secondary-fixed: #001a42;
+  --color-inverse-surface: #303032;
+  --color-tertiary-fixed: #fadfb8;
+  --color-surface-container-high: #eae7e9;
+  --color-primary-fixed-dim: #bcc7de;
+  --color-secondary-fixed-dim: #adc6ff;
+  --color-surface-variant: #e4e2e3;
+  --color-surface-dim: #dcd9db;
+  --color-secondary: #0058be;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary-fixed: #111c2d;
+  --color-inverse-on-surface: #f3f0f2;
+  --color-on-tertiary-container: #a38c6a;
+  --color-surface-bright: #fbf8fa;
+  --color-on-error-container: #93000a;
+  --color-on-background: #1b1b1d;
+  --color-secondary-container: #2170e4;
+  --color-background: #fbf8fa;
+  --color-outline: #75777d;
+  --color-on-surface: #1b1b1d;
+  --color-error: #ba1a1a;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-fixed-variant: #564427;
+  --color-primary-container: #1e293b;
+  --color-primary: #091426;
+  --color-inverse-primary: #bcc7de;
+  --color-surface-container-highest: #e4e2e3;
+
   /* Elevation tokens */
   --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.05);
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.03), 0 1px 3px rgb(16 24 40 / 0.04);

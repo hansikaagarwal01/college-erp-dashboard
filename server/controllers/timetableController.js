@@ -18,6 +18,7 @@ const POPULATE = [
 ];
 
 const resolveRef = async (Model, value, fields, label) => {
+  if (!value) return null;
   if (mongoose.isValidObjectId(value)) return value;
   const doc = await Model.findOne({ $or: fields.map((f) => ({ [f]: value })) }).select("_id");
   if (!doc) throw new AppError(`${label} not found: ${value}`, 400);
@@ -30,27 +31,34 @@ const resolveDepartment = (v) =>
 const resolveFaculty = (v) =>
   resolveRef(Faculty, v, ["employeeId"], "Faculty");
 
-// "09:00" < "10:00" compares correctly with zero-padded strings
-const timesOverlap = (aStart, aEnd, bStart, bEnd) => aStart < bEnd && bStart < aEnd;
-
 const serializeTimetable = (slot) => ({
   id: slot._id,
-  dayOfWeek: slot.dayOfWeek,
+  _id: slot._id,
+  day: slot.day || slot.dayOfWeek,
+  dayOfWeek: slot.dayOfWeek || slot.day,
   startTime: slot.startTime,
   endTime: slot.endTime,
   course: slot.course
     ? { id: slot.course._id, name: slot.course.courseName, code: slot.course.courseCode }
-    : null,
+    : slot.courseName || slot.courseCode || null,
+  courseCode: slot.course?.courseCode || slot.courseCode || "",
+  courseName: slot.course?.courseName || slot.courseName || "",
   faculty: slot.faculty
     ? {
         id: slot.faculty._id,
         name: slot.faculty.user?.name || `${slot.faculty.firstName} ${slot.faculty.lastName}`.trim(),
         employeeId: slot.faculty.employeeId,
       }
-    : null,
+    : slot.facultyName || null,
+  facultyName:
+    slot.faculty?.user?.name ||
+    `${slot.faculty?.firstName || ""} ${slot.faculty?.lastName || ""}`.trim() ||
+    slot.facultyName ||
+    "",
   department: slot.department
     ? { id: slot.department._id, name: slot.department.departmentName, code: slot.department.departmentCode }
-    : null,
+    : slot.departmentName || null,
+  departmentName: slot.department?.departmentName || slot.departmentName || "",
   semester: slot.semester,
   section: slot.section,
   room: slot.room,
@@ -63,8 +71,9 @@ const findFullSlot = (id) => Timetable.findById(id).populate(POPULATE);
 // Check for scheduling conflicts against other slots
 const checkConflicts = async (data, excludeId) => {
   const conflicts = [];
+  const dayVal = data.dayOfWeek || data.day;
   const baseQuery = {
-    dayOfWeek: data.dayOfWeek,
+    $or: [{ dayOfWeek: dayVal }, { day: dayVal }],
     startTime: { $lt: data.endTime },
     endTime: { $gt: data.startTime },
   };
@@ -77,11 +86,11 @@ const checkConflicts = async (data, excludeId) => {
       select: COURSE_FIELDS,
     });
     if (roomClash) {
-      conflicts.push(`Room "${data.room}" is already booked ${data.dayOfWeek} ${roomClash.startTime}-${roomClash.endTime}`);
+      conflicts.push(`Room "${data.room}" is already booked ${dayVal} ${roomClash.startTime}-${roomClash.endTime}`);
     }
   }
 
-  if (data.faculty) {
+  if (data.faculty && mongoose.isValidObjectId(data.faculty)) {
     const facultyClash = await Timetable.findOne({ ...baseQuery, faculty: data.faculty }).populate({
       path: "faculty",
       select: FACULTY_FIELDS,
@@ -91,17 +100,19 @@ const checkConflicts = async (data, excludeId) => {
       const name =
         facultyClash.faculty?.user?.name ||
         `${facultyClash.faculty?.firstName || ""} ${facultyClash.faculty?.lastName || ""}`.trim();
-      conflicts.push(`Faculty "${name}" is already scheduled ${data.dayOfWeek} ${facultyClash.startTime}-${facultyClash.endTime}`);
+      conflicts.push(`Faculty "${name}" is already scheduled ${dayVal} ${facultyClash.startTime}-${facultyClash.endTime}`);
     }
   }
 
   if (data.semester && data.section) {
-    const sectionClash = await Timetable.findOne({
+    const sectionQuery = {
       ...baseQuery,
       semester: data.semester,
       section: data.section,
-      department: data.department,
-    }).populate({ path: "course", select: COURSE_FIELDS });
+    };
+    if (data.department) sectionQuery.department = data.department;
+
+    const sectionClash = await Timetable.findOne(sectionQuery).populate({ path: "course", select: COURSE_FIELDS });
     if (sectionClash) {
       conflicts.push(
         `Section ${data.semester}-${data.section} already has ${sectionClash.course?.courseName || "a class"} ${sectionClash.startTime}-${sectionClash.endTime}`
@@ -114,12 +125,12 @@ const checkConflicts = async (data, excludeId) => {
 
 // Get all timetable slots (filter, pagination)
 const getTimetable = asyncHandler(async (req, res) => {
-  const { dayOfWeek, course, department, faculty, semester, section } = req.query;
+  const { dayOfWeek, day, course, department, faculty, semester, section } = req.query;
   const { page, limit, skip } = getPagination(req.query, 50);
 
   const query = {};
-
-  if (dayOfWeek) query.dayOfWeek = dayOfWeek;
+  const dayVal = dayOfWeek || day;
+  if (dayVal) query.$or = [{ dayOfWeek: dayVal }, { day: dayVal }];
   if (semester) query.semester = Number(semester);
   if (section) query.section = section.toUpperCase();
   if (course) query.course = await resolveCourse(course);
@@ -132,7 +143,7 @@ const getTimetable = asyncHandler(async (req, res) => {
       .populate(POPULATE)
       .skip(skip)
       .limit(limit)
-      .sort({ dayOfWeek: 1, startTime: 1 }),
+      .sort({ dayOfWeek: 1, day: 1, startTime: 1 }),
   ]);
 
   res.status(200).json({
@@ -158,9 +169,12 @@ const getTimetableById = asyncHandler(async (req, res) => {
 const createTimetable = asyncHandler(async (req, res) => {
   const data = {
     ...req.body,
-    course: await resolveCourse(req.body.course),
-    department: await resolveDepartment(req.body.department),
+    dayOfWeek: req.body.dayOfWeek || req.body.day,
+    day: req.body.day || req.body.dayOfWeek,
   };
+
+  if (data.course) data.course = await resolveCourse(data.course);
+  if (data.department) data.department = await resolveDepartment(data.department);
   if (data.faculty) data.faculty = await resolveFaculty(data.faculty);
 
   const conflicts = await checkConflicts(data);
@@ -174,13 +188,17 @@ const createTimetable = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: "Timetable entry created successfully",
-    data: serializeTimetable(full),
+    data: serializeTimetable(full || slot),
   });
 });
 
 // Update a timetable slot
 const updateTimetable = asyncHandler(async (req, res) => {
   const data = { ...req.body };
+  if (data.day || data.dayOfWeek) {
+    data.dayOfWeek = data.dayOfWeek || data.day;
+    data.day = data.day || data.dayOfWeek;
+  }
 
   if (data.course) data.course = await resolveCourse(data.course);
   if (data.department) data.department = await resolveDepartment(data.department);
@@ -207,7 +225,7 @@ const updateTimetable = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Timetable entry updated successfully",
-    data: serializeTimetable(full),
+    data: serializeTimetable(full || slot),
   });
 });
 

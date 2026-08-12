@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './layouts/MainLayout'
 
@@ -10,6 +9,7 @@ import ForgotPassword from './pages/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/ResetPassword/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail/VerifyEmail'
 import ChangePassword from './pages/ChangePassword/ChangePassword'
+import Unauthorized from './pages/unauthorized/Unauthorized'
 
 // Dashboard
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -51,13 +51,14 @@ import Jobs from './pages/Jobs/Jobs'
 
 function App() {
   return (
-    <AuthProvider>
+    <>
       <Routes>
         {/* Public auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Protected routes inside MainLayout */}
         <Route
@@ -114,7 +115,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster position="top-right" />
-    </AuthProvider>
+    </>
   )
 }
 

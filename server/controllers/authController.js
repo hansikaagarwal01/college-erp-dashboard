@@ -62,6 +62,11 @@ const saveRefreshToken = async (userId, token) => {
   );
 };
 
+// Backwards-compatible generateToken helper
+const generateToken = (id) => {
+  return generateAccessToken(id);
+};
+
 const issueTokens = (user) => ({
   accessToken: generateAccessToken(user._id),
   refreshToken: generateRefreshToken(user._id),
@@ -157,8 +162,10 @@ const login = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Login successful",
+    token: accessToken, // for legacy client compatibility
     accessToken,
     refreshToken,
+    role: user.role,
     emailVerified: user.emailVerified,
     passwordExpired: isPasswordExpired(user),
     data: toPublicUser(user),
@@ -207,6 +214,7 @@ const refresh = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Token refreshed",
+    token: accessToken,
     accessToken,
     refreshToken: newRefreshToken,
     data: toPublicUser(user),
@@ -348,15 +356,13 @@ const changePassword = asyncHandler(async (req, res) => {
 // Roles an admin may create through the register endpoint
 const canAssignRole = (role) => STAFF_ROLES.includes(role);
 
-// Request a password reset token. Email delivery is not configured yet,
-// so the token/link is returned in the response (dev mode).
+// Request a password reset token
 const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
 
   if (!user) {
-    // Never reveal whether an account exists
     return res.status(200).json({
       success: true,
       message: "If an account exists for that email, a reset link has been generated.",
@@ -421,6 +427,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  generateToken,
   registerUser,
   canAssignRole,
   login,

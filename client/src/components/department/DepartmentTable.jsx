@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import EmptyState from "../ui/EmptyState";
+import { usePermissions } from "../../hooks/usePermissions";
 
-function DepartmentTable({ departments }) {
+function DepartmentTable({ departments, onDelete }) {
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
 
   if (departments.length === 0) {
     return (
@@ -63,29 +65,34 @@ function DepartmentTable({ departments }) {
                     }
                     className="btn-view"
                     aria-label={`View ${department.name}`}
+                    title="View"
                   >
                     <FaEye />
                   </button>
 
-                  <button
-                    onClick={() =>
-                      navigate(`/departments/edit/${department.id}`)
-                    }
-                    className="btn-edit"
-                    aria-label={`Edit ${department.name}`}
-                  >
-                    <FaEdit />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() =>
+                        navigate(`/departments/edit/${department.id}`)
+                      }
+                      className="btn-edit"
+                      aria-label={`Edit ${department.name}`}
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() =>
-                      alert(`Delete ${department.name}`)
-                    }
-                    className="btn-delete"
-                    aria-label={`Delete ${department.name}`}
-                  >
-                    <FaTrash />
-                  </button>
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDelete(department)}
+                      className="btn-delete"
+                      aria-label={`Delete ${department.name}`}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

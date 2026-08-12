@@ -58,7 +58,7 @@ app.get("/", (req, res) => {
   res.send("College ERP Backend is Running 🚀");
 });
 
-// API Routes (versioned)
+// API Routes (versioned v1)
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/students", studentRoutes);
 app.use("/api/v1/faculty", facultyRoutes);
@@ -79,6 +79,15 @@ app.use("/api/v1/admissions", admissionRoutes);
 app.use("/api/v1/curriculum", syllabusRoutes);
 app.use("/api/v1/workload", workloadRoutes);
 app.use("/api/v1/jobs", jobRoutes);
+
+// Unversioned route aliases for backwards compatibility
+app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
+app.use("/api/faculty", facultyRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/timetable", timetableRoutes);
 
 // 404 + central error handling (must be last)
 app.use(notFound);
