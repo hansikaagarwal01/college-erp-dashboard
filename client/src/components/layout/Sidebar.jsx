@@ -51,7 +51,7 @@ const menuItems = [
 ];
 
 const iconButtonClass =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors duration-200 hover:bg-gray-800 hover:text-white";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container dark:text-on-primary-container dark:hover:bg-primary-container";
 
 function Sidebar({ open, onClose }) {
   const { user } = useAuth();
@@ -77,31 +77,42 @@ function Sidebar({ open, onClose }) {
     canAccess(user?.role, item.roles)
   );
 
+  const navClasses = ({ isActive }) =>
+    `group relative flex items-center rounded-lg text-sm transition-all duration-200 active:scale-[0.98] ${
+      compact ? "justify-center py-3" : "gap-3 px-4 py-3"
+    } ${
+      isActive
+        ? `bg-secondary-fixed/30 font-bold text-on-secondary-fixed-variant dark:bg-secondary dark:text-white ${
+            compact ? "" : "border-l-4 border-secondary dark:border-secondary-fixed-dim"
+          }`
+        : "text-on-surface-variant hover:bg-surface-container dark:text-on-primary-container dark:hover:bg-primary-container"
+    }`;
+
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-gray-900 shadow-xl transition-all duration-300 lg:static lg:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-outline-variant bg-surface shadow-xl transition-all duration-300 dark:border-primary-container dark:bg-primary lg:static lg:translate-x-0 ${
         compact ? "w-20" : "w-72"
       } ${open ? "translate-x-0" : "-translate-x-full"}`}
     >
       {/* Brand */}
       <div
-        className={`flex items-center border-b border-gray-800 py-5 ${
+        className={`flex items-center border-b border-outline-variant py-5 dark:border-primary-container ${
           compact ? "justify-center px-2" : "justify-between px-5"
         }`}
       >
-        <div
-          className={`flex items-center gap-3 ${
-            compact ? "flex-col" : ""
-          }`}
-        >
-          <div className="rounded-xl bg-primary-600 p-2.5 shadow-card">
-            <FaUniversity className="text-xl text-white" />
+        <div className={`flex items-center gap-3 ${compact ? "flex-col" : ""}`}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-fixed text-secondary dark:bg-secondary dark:text-white">
+            <FaUniversity className="text-lg" />
           </div>
 
           {!compact && (
             <div className="leading-tight">
-              <h1 className="text-lg font-bold text-white">College ERP</h1>
-              <p className="text-xs text-gray-400">Admin Dashboard</p>
+              <h1 className="text-lg font-bold text-primary dark:text-on-primary">
+                College ERP
+              </h1>
+              <p className="text-xs font-medium text-on-surface-variant dark:text-on-primary-container">
+                Admin Dashboard
+              </p>
             </div>
           )}
         </div>
@@ -118,33 +129,17 @@ function Sidebar({ open, onClose }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-4">
         {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             onClick={onClose}
             title={compact ? item.name : undefined}
-            className={({ isActive }) =>
-              `group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200 ${
-                compact ? "justify-center py-3" : "gap-3 px-3.5 py-2.5"
-              } ${
-                isActive
-                  ? "bg-primary-600 text-white shadow-card"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`
-            }
+            className={navClasses}
           >
-            {({ isActive }) => (
+            {() => (
               <>
-                {/* Active route indicator */}
-                <span
-                  aria-hidden="true"
-                  className={`absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-white transition-opacity duration-200 ${
-                    isActive ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-
                 <span className="text-lg">{item.icon}</span>
 
                 {!compact && <span className="flex-1">{item.name}</span>}
@@ -155,10 +150,12 @@ function Sidebar({ open, onClose }) {
       </nav>
 
       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-gray-800 px-3 py-3">
+      <div className="flex items-center justify-between border-t border-outline-variant px-3 py-3 dark:border-primary-container">
         {!compact ? (
           <>
-            <p className="px-2 text-xs text-gray-500">© 2026 College ERP</p>
+            <p className="px-2 text-xs font-medium text-on-surface-variant dark:text-on-primary-container">
+              © 2026 College ERP
+            </p>
             <button
               onClick={() => persistCollapsed(true)}
               className={`${iconButtonClass} hidden lg:flex`}
