@@ -2,10 +2,10 @@ import { FaPlus, FaRedo } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
-import FacultySearch from "../../components/faculty/FacultySearch";
-import FacultyFilters from "../../components/faculty/FacultyFilters";
-import FacultyStats from "../../components/faculty/FacultyStats";
-import FacultyTable from "../../components/faculty/FacultyTable";
+import FacultySearch from "../../components/Faculty/FacultySearch";
+import FacultyFilters from "../../components/Faculty/FacultyFilters";
+import FacultyStats from "../../components/Faculty/FacultyStats";
+import FacultyTable from "../../components/Faculty/FacultyTable";
 import EmptyState from "../../components/ui/EmptyState";
 import api, { getErrorMessage } from "../../services/api";
 import { usePermissions } from "../../hooks/usePermissions";

@@ -8,6 +8,8 @@ import { usePermissions } from "../../hooks/usePermissions";
 function normalizeFaculty(f) {
   return {
     ...f,
+    _id: f._id || f.id,
+    id: f._id || f.id,
     name: `${f.firstName || ""} ${f.lastName || ""}`.trim() || f.name || "",
     image: f.image || "https://i.pravatar.cc/150?img=18",
   };

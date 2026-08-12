@@ -80,17 +80,17 @@ function Timetable() {
 
   const handleSave = async (data) => {
     try {
+      const payload = { ...data };
+      delete payload._id;
       if (data._id) {
-        const res = await api.put(`/timetable/${data._id}`, data);
-        const updated = normalizeEntry(res.data?.data || data);
+        const res = await api.put(`/timetable/${data._id}`, payload);
+        const updated = normalizeEntry(res.data?.data || payload);
         setEntries((prev) =>
           prev.map((entry) =>
             entry._id === updated._id ? updated : entry
           )
         );
       } else {
-        const payload = { ...data };
-        delete payload._id;
         const res = await api.post("/timetable", payload);
         const created = normalizeEntry(res.data?.data || payload);
         setEntries((prev) => [...prev, created]);

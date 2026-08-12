@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import FacultyForm from "../../components/faculty/FacultyForm";
+import FacultyForm from "../../components/Faculty/FacultyForm";
 import EmptyState from "../../components/ui/EmptyState";
 import api, { getErrorMessage } from "../../services/api";
 

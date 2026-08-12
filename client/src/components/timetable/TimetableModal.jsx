@@ -34,6 +34,7 @@ function TimetableModal({
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -44,12 +45,16 @@ function TimetableModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
 
     const selectedCourse = courses.find(
       (c) => String(c._id) === String(formData.courseId)
     );
 
-    if (!selectedCourse) return;
+    if (!selectedCourse) {
+      setSubmitError("Select a course to save this class.");
+      return;
+    }
 
     const slot = TIME_SLOTS.find((s) => s.start === formData.time);
 
@@ -163,6 +168,12 @@ function TimetableModal({
           </>
         ) : (
           <form onSubmit={handleSubmit}>
+            {submitError && (
+              <div className="mb-5 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-red-600/15 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-400/20">
+                {submitError}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {/* Day */}
               <div>

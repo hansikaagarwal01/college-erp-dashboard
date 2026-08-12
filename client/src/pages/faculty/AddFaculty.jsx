@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import FacultyForm from "../../components/faculty/FacultyForm";
+import FacultyForm from "../../components/Faculty/FacultyForm";
 
 function AddFaculty() {
   const navigate = useNavigate();

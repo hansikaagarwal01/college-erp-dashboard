@@ -6,6 +6,14 @@ function TimetableCards({ entries, onView }) {
     <div className="space-y-4 md:hidden">
       {DAYS.map((day) => {
         const dayEntries = entries.filter((entry) => entry.day === day);
+        const startTimes = dayEntries.map((entry) => entry.startTime);
+        const endTimes = dayEntries.map((entry) => entry.endTime);
+        const rangeStart = startTimes.length
+          ? startTimes.reduce((a, b) => (a < b ? a : b))
+          : "09:00";
+        const rangeEnd = endTimes.length
+          ? endTimes.reduce((a, b) => (a > b ? a : b))
+          : "16:00";
 
         return (
           <div key={day} className="card p-4">
@@ -40,7 +48,7 @@ function TimetableCards({ entries, onView }) {
             )}
 
             <p className="mt-3 text-[11px] text-gray-400 dark:text-gray-500">
-              {formatTime("09:00")} – {formatTime("16:00")}
+              {formatTime(rangeStart)} – {formatTime(rangeEnd)}
             </p>
           </div>
         );
